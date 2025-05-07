@@ -1,5 +1,5 @@
 import express from 'express';
-import { check } from 'express-validator';
+const { check } = require('express-validator');
 import { signup } from '../controller/userController';
 
 const router = express.Router();

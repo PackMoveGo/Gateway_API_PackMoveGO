@@ -1,0 +1,38 @@
+services:
+  - type: web
+    name: pack-go-movers-api
+    env: node
+    repo: https://github.com/SereneAura2/PackMoveGO-API
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: EMAIL_USER
+        sync: false
+      - key: EMAIL_PASS
+        sync: false
+    healthCheckPath: /api/health
+    autoDeploy: true
+    plan: free
+
+  - type: web
+    name: pack-go-movers-client
+    env: node
+    buildCommand: cd client && npm install && npm run build
+    startCommand: cd client && npm run preview
+    envVars:
+      - key: VITE_API_URL
+        value: https://pack-go-movers-api.onrender.com
+      - key: VITE_APP_NAME
+        value: "Pack Go Movers"
+      - key: VITE_APP_DOMAIN
+        value: "packgomovers.com" 

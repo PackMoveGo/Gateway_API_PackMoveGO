@@ -10,17 +10,25 @@ export interface IUserData {
 
 export const createUser = async (userData: IUserData) => {
   try {
+    console.log('Attempting to create user with email:', userData.email);
+    
     const existingUser = await User.findOne({ email: userData.email });
     if (existingUser) {
+      console.log('User already exists with email:', userData.email);
       throw new Error('Email already registered');
-  }
+    }
 
     const user = new User(userData);
     await user.save();
+    console.log('User created successfully:', user._id);
     return user;
   } catch (error) {
+    console.error('Error in createUser:', error);
     if (error instanceof mongoose.Error.ValidationError) {
       throw error;
+    }
+    if (error instanceof mongoose.Error.DuplicateKeyError) {
+      throw new Error('Email already registered');
     }
     throw new Error('Error creating user');
   }
@@ -28,8 +36,16 @@ export const createUser = async (userData: IUserData) => {
 
 export const findUserByEmail = async (email: string) => {
   try {
-    return await User.findOne({ email });
+    console.log('Searching for user with email:', email);
+    const user = await User.findOne({ email });
+    if (user) {
+      console.log('User found:', user._id);
+    } else {
+      console.log('No user found with email:', email);
+    }
+    return user;
   } catch (error) {
+    console.error('Error in findUserByEmail:', error);
     throw new Error('Error finding user');
   }
 }; 

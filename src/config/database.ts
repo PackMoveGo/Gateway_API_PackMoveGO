@@ -15,8 +15,12 @@ console.log('Username check:', MONGODB_URI.includes('rhamseyswork'));
 
 export const connectDB = async () => {
   try {
-    await mongoose.connect(MONGODB_URI);
-    console.log('MongoDB connected successfully');
+    await mongoose.connect(MONGODB_URI, {
+      dbName: 'packgomove', // Explicitly set the database name
+      retryWrites: true,
+      w: 'majority'
+    });
+    console.log('MongoDB connected successfully to packgomove database');
 
     // Handle connection events
     mongoose.connection.on('error', (err) => {

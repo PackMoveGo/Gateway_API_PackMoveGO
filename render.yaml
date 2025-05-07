@@ -11,7 +11,7 @@ services:
       - key: PORT
         value: 10000
       - key: MONGODB_URI
-        sync: false
+        value: mongodb+srv://rhamseyswork:PiratesMath1983@packgomove.uz0qifj.mongodb.net/?retryWrites=true&w=majority&appName=PackGoMove
       - key: JWT_SECRET
         sync: false
       - key: STRIPE_SECRET_KEY

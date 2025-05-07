@@ -41,4 +41,8 @@ const userSchema = new Schema<IUser>({
   collection: 'users'
 });
 
+// Create indexes
+userSchema.index({ email: 1 }, { unique: true });
+userSchema.index({ phone: 1 });
+
 export default mongoose.model<IUser>('User', userSchema); 

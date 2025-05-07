@@ -1,8 +1,8 @@
-import { Router } from 'express';
+import express from 'express';
 import { body } from 'express-validator';
 import { signup } from '../controller/userController';
 
-const router = Router();
+const router = express.Router();
 
 // Validation middleware
 const validateUser = [

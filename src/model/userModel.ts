@@ -41,8 +41,8 @@ const userSchema = new Schema<IUser>({
   collection: 'users'
 });
 
-// Create indexes
-userSchema.index({ email: 1 }, { unique: true });
+// Remove the duplicate index since it's already created by the unique: true option
+// userSchema.index({ email: 1 }, { unique: true });
 userSchema.index({ phone: 1 });
 
 export default mongoose.model<IUser>('User', userSchema); 

@@ -7,7 +7,7 @@ import securityRoutes from './route/securityRoutes';
 import dotenv from 'dotenv';
 import path from 'path';
 import { createProxyMiddleware, RequestHandler } from 'http-proxy-middleware';
-import { vercelIpWhitelist } from './middleware/ipWhitelist';
+import { securityMiddleware } from './middleware/security';
 
 dotenv.config();
 
@@ -31,12 +31,12 @@ const corsOptions = {
   preflightContinue: false
 };
 
-// Middleware
+// Apply security middleware first
+app.use(securityMiddleware);
+
+// Basic middleware
 app.use(cors(corsOptions));
 app.use(express.json());
-
-// Apply IP whitelist middleware to all API routes
-app.use('/api', vercelIpWhitelist);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

@@ -77,7 +77,7 @@ if (isDevelopment) {
   app.use('/', createProxyMiddleware(proxyOptions) as RequestHandler);
 } else {
   // Production mode: Serve static files
-  app.use(express.static(path.join(__dirname, 'dist')));
+  app.use(express.static(path.join(__dirname)));
   
   // Handle client-side routing
   app.get('*', (req, res, next) => {
@@ -86,7 +86,7 @@ if (isDevelopment) {
       return next();
     }
     // Serve index.html for all other routes
-    res.sendFile(path.join(__dirname, 'dist/index.html'));
+    res.sendFile(path.join(__dirname, 'index.html'));
   });
 }
 

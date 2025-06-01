@@ -17,5 +17,5 @@
     }
   },
   "include": ["src/server.ts", "src/route/**/*", "src/controller/**/*", "src/service/**/*", "src/model/**/*"],
-  "exclude": ["node_modules", "dist", "src/components", "src/pages", "src/App.tsx"]
+  "exclude": ["node_modules", "dist", "src/components", "src/staticpage", "src/App.tsx"]
 } 

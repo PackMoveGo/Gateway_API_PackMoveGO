@@ -1,6 +1,6 @@
 import express from 'express';
 import cors from 'cors';
-import { connectDB } from '../config/database';
+import { connectDB } from './config/database';
 import signupRoutes from './route/signup';
 import sectionRoutes from './route/sectionRoutes';
 import securityRoutes from './route/securityRoutes';

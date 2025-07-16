@@ -1,5 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
 
+<<<<<<< HEAD
+=======
+const allowedIps = (process.env.ALLOWED_IPS || '').split(',').map(ip => ip.trim()).filter(Boolean);
+
+>>>>>>> b6c9270 (Initial commit: PackMoveGO API backend, ready for Render deployment with versioned endpoints and config folder support)
 // Vercel's IP ranges
 const VERCEL_IP_RANGES = [
   '76.76.21.0/24',  // Vercel's main IP range
@@ -284,4 +289,24 @@ export const vercelIpWhitelist = (req: Request, res: Response, next: NextFunctio
   }
 
   next();
+<<<<<<< HEAD
 }; 
+=======
+};
+
+export function ipWhitelist(req: Request, res: Response, next: NextFunction) {
+  // Express sets req.ip to the left-most value in X-Forwarded-For or remoteAddress
+  const requestIp = req.ip || req.connection.remoteAddress || '';
+  if (requestIp && allowedIps.includes(requestIp)) {
+    return next();
+  }
+  // Also check for IPv6-mapped IPv4 addresses (e.g., ::ffff:127.0.0.1)
+  if (requestIp && requestIp.startsWith('::ffff:')) {
+    const ipv4 = requestIp.replace('::ffff:', '');
+    if (allowedIps.includes(ipv4)) {
+      return next();
+    }
+  }
+  res.status(403).json({ success: false, message: 'Your IP is not allowed.' });
+} 
+>>>>>>> b6c9270 (Initial commit: PackMoveGO API backend, ready for Render deployment with versioned endpoints and config folder support)

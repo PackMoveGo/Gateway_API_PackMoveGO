@@ -300,6 +300,7 @@ export function ipWhitelist(req: Request, res: Response, next: NextFunction) {
   const renderIps = [
     '10.0.0.0/8',    // Private network range
     '172.16.0.0/12', // Private network range
+    '172.58.0.0/16', // Render's specific range (includes 172.58.x.x)
     '192.168.0.0/16', // Private network range
     '127.0.0.1',     // Localhost
     '::1'            // IPv6 localhost

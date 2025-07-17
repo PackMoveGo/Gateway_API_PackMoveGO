@@ -7,8 +7,9 @@
     "start": "node dist/server.js",
     "dev": "npm run dev:backend",
     "dev:backend": "nodemon src/server.ts",
-    "build": "npm run build:backend",
+    "build": "npm run build:backend && npm run copy-data",
     "build:backend": "tsc",
+    "copy-data": "cp -r src/data dist/data",
     "postinstall": "npm run build:backend"
   },
   "dependencies": {

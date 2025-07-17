@@ -9,6 +9,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { securityMiddleware } from './middleware/security';
 import dataRoutes from './route/dataRoutes';
+import { ipWhitelist } from './middleware/ipWhitelist';
 
 // Load environment variables from config directory
 dotenv.config({ path: path.join(__dirname, '../config/.env') });
@@ -45,6 +46,7 @@ const corsOptions = {
 
 // Apply security middleware first
 app.use(securityMiddleware);
+app.use(ipWhitelist);
 
 // Basic middleware
 app.use(cors(corsOptions));

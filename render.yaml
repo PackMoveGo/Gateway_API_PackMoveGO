@@ -8,8 +8,7 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: PORT
-        value: 10000
+      # PORT is automatically assigned by Render - no need to set it explicitly
       - key: MONGODB_URI
         value: mongodb+srv://admin:nJPb6TTiYqfjjexI@packmovego.9yxraau.mongodb.net/?retryWrites=true&w=majority&appName=PackMoveGo
       - key: DATABASE_URL

@@ -2,6 +2,12 @@ import { Request, Response, NextFunction } from 'express';
 
 const allowedIps = (process.env.ALLOWED_IPS || '').split(',').map(ip => ip.trim()).filter(Boolean);
 
+// Debug logging
+console.log('🔐 IP Whitelist Configuration:');
+console.log('ALLOWED_IPS env var:', process.env.ALLOWED_IPS);
+console.log('Parsed allowed IPs:', allowedIps);
+console.log('IP Whitelist Status:', allowedIps.length > 0 ? '✅ Active' : '❌ Not configured');
+
 // Vercel's IP ranges
 const VERCEL_IP_RANGES = [
   '76.76.21.0/24',  // Vercel's main IP range
@@ -260,10 +266,22 @@ function ipToLong(ip: string): number {
 
 export function ipWhitelist(req: Request, res: Response, next: NextFunction) {
   const clientIp = req.headers['x-forwarded-for']?.toString().split(',')[0].trim() || req.socket.remoteAddress || '';
+  // Debug logging
+  console.log(`🔐 IP Check - Client IP: ${clientIp}, Path: ${req.path}`);
+  
   // Allow if in allowed IPs
-  if (allowedIps.includes(clientIp)) return next();
+  if (allowedIps.includes(clientIp)) {
+    console.log(`✅ IP ${clientIp} allowed (whitelisted)`);
+    return next();
+  }
+  
   // Allow if in Vercel IPs
-  if (VERCEL_IP_RANGES.some(range => isIpInRange(clientIp, range))) return next();
+  if (VERCEL_IP_RANGES.some(range => isIpInRange(clientIp, range))) {
+    console.log(`✅ IP ${clientIp} allowed (Vercel range)`);
+    return next();
+  }
+  
   // Otherwise, block
+  console.log(`❌ IP ${clientIp} blocked (not whitelisted)`);
   return res.status(403).json({ error: 'Access denied: IP not whitelisted' });
 } 

@@ -12,28 +12,62 @@ export const getDataFile = (req: Request, res: Response) => {
     const pathParts = req.path.split('/');
     name = pathParts[pathParts.length - 1]; // Get the last part of the path
   }
+  
+  // Validate input
+  if (!name || typeof name !== 'string') {
+    return res.status(400).json({ 
+      success: false,
+      message: 'Invalid request',
+      error: 'Missing or invalid data name parameter',
+      timestamp: new Date().toISOString()
+    });
+  }
+  
   // Only allow specific files for security
   const allowedFiles = [
     'nav', 'contact', 'referral', 'blog', 'reviews', 'locations', 'supplies', 'Services', 'Testimonials', 'about'
   ];
   if (!allowedFiles.includes(name)) {
-    return res.status(404).json({ error: 'Data file not found' });
+    return res.status(404).json({ 
+      success: false,
+      message: 'Data file not found',
+      error: `Requested data file '${name}' does not exist`,
+      timestamp: new Date().toISOString()
+    });
   }
+  
   // about.txt is a text file, others are JSON
   const ext = name === 'about' ? '.txt' : '.json';
   const filePath = path.join(dataDir, name + ext);
+  
   fs.readFile(filePath, 'utf8', (err, data) => {
     if (err) {
-      return res.status(404).json({ error: 'Data file not found' });
+      return res.status(404).json({ 
+        success: false,
+        message: 'Data file not found',
+        error: 'The requested data file could not be loaded',
+        timestamp: new Date().toISOString()
+      });
     }
+    
     if (ext === '.json') {
       try {
-        return res.json(JSON.parse(data));
+        const parsedData = JSON.parse(data);
+        return res.status(200).json({
+          success: true,
+          data: parsedData,
+          timestamp: new Date().toISOString()
+        });
       } catch (e) {
-        return res.status(500).json({ error: 'Invalid JSON format' });
+        return res.status(500).json({ 
+          success: false,
+          message: 'Server error',
+          error: 'Invalid JSON format in data file',
+          timestamp: new Date().toISOString()
+        });
       }
     } else {
-      return res.type('text/plain').send(data);
+      return res.status(200).type('text/plain').send(data);
     }
   });
 }; 

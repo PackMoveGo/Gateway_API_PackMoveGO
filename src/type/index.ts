@@ -1,3 +1,48 @@
+// HTTP Status Codes for PackMoveGO API
+export const HTTP_STATUS = {
+  // Success Responses
+  OK: 200,                    // GET /api/health, GET /api/data/*, GET /
+  CREATED: 201,               // POST /api/signup (successful)
+  
+  // Client Error Responses
+  BAD_REQUEST: 400,           // Invalid input, validation errors
+  UNAUTHORIZED: 401,          // Missing or invalid authentication
+  FORBIDDEN: 403,             // IP whitelist blocked, access denied
+  NOT_FOUND: 404,             // API endpoint not found, data file not found
+  CONFLICT: 409,              // Email already exists, resource conflict
+  TOO_MANY_REQUESTS: 429,     // Rate limit exceeded
+  
+  // Server Error Responses
+  INTERNAL_SERVER_ERROR: 500, // Server errors, JSON parsing errors
+  SERVICE_UNAVAILABLE: 503    // MongoDB connection issues
+} as const;
+
+// API Response Types
+export interface ApiResponse<T = any> {
+  success: boolean;
+  message?: string;
+  data?: T;
+  error?: string;
+  errors?: Array<{
+    field: string;
+    message: string;
+  }>;
+  timestamp: string;
+}
+
+// Error Types
+export interface ValidationError {
+  field: string;
+  message: string;
+}
+
+export interface ApiError {
+  success: false;
+  message: string;
+  error: string;
+  timestamp: string;
+}
+
 export interface Move {
   id: string;
   customerName: string;

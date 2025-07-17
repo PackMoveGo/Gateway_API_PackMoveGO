@@ -20,11 +20,7 @@ const port = process.env.PORT || 3000;
 // Connect to MongoDB (optional in development)
 connectDB().catch((err: Error) => {
   console.error('❌ Failed to connect to MongoDB:', err);
-  if (process.env.NODE_ENV === 'development') {
-    console.log('⚠️ Continuing without database connection in development mode');
-  } else {
-    process.exit(1);
-  }
+  console.log('⚠️ Continuing without database connection');
 });
 
 // CORS configuration for REST API
@@ -78,7 +74,7 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// API Routes
+// API Routes with proper status codes
 app.use('/api', signupRoutes);
 app.use('/api', sectionRoutes);
 app.use('/api', securityRoutes);
@@ -87,7 +83,7 @@ app.use('/api', dataRoutes);
 
 // Root endpoint
 app.get('/', (req, res) => {
-  res.json({
+  res.status(200).json({
     message: 'Welcome to PackMoveGO REST API',
     version: '1.0.0',
     status: 'running',
@@ -113,6 +109,16 @@ app.get('/', (req, res) => {
       security: '/api/security',
       prelaunch: '/api/prelaunch'
     }
+  });
+});
+
+// Return 403 Forbidden for non-API requests (except root)
+app.get('*', (req, res) => {
+  res.status(403).json({
+    success: false,
+    message: 'Access Forbidden',
+    error: 'This endpoint is not available',
+    timestamp: new Date().toISOString()
   });
 });
 
@@ -143,12 +149,37 @@ app.use('/api/*', (req, res) => {
   });
 });
 
-// Error handling middleware
+// Error handling middleware with proper status codes
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error('❌ Server Error:', err.stack);
-  res.status(500).json({
+  
+  // Determine appropriate status code based on error type
+  let statusCode = 500;
+  let errorMessage = 'Something went wrong!';
+  
+  if (err.name === 'ValidationError') {
+    statusCode = 400;
+    errorMessage = 'Validation failed';
+  } else if (err.name === 'UnauthorizedError') {
+    statusCode = 401;
+    errorMessage = 'Unauthorized access';
+  } else if (err.name === 'ForbiddenError') {
+    statusCode = 403;
+    errorMessage = 'Access forbidden';
+  } else if (err.name === 'NotFoundError') {
+    statusCode = 404;
+    errorMessage = 'Resource not found';
+  } else if (err.name === 'ConflictError') {
+    statusCode = 409;
+    errorMessage = 'Resource conflict';
+  } else if (err.name === 'RateLimitError') {
+    statusCode = 429;
+    errorMessage = 'Too many requests';
+  }
+  
+  res.status(statusCode).json({
     success: false,
-    message: 'Something went wrong!',
+    message: errorMessage,
     error: process.env.NODE_ENV === 'development' ? err.message : undefined,
     timestamp: new Date().toISOString()
   });

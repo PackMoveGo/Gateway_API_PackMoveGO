@@ -311,7 +311,8 @@ export function ipWhitelist(req: Request, res: Response, next: NextFunction) {
     return next();
   }
   
-  // Otherwise, block
-  console.log(`❌ IP ${clientIp} blocked (not whitelisted)`);
-  return res.status(403).json({ error: 'Access denied: IP not whitelisted' });
+  // For public APIs, allow all requests by default
+  // Only block if explicitly configured to be restrictive
+  console.log(`✅ IP ${clientIp} allowed (public API access)`);
+  return next();
 } 

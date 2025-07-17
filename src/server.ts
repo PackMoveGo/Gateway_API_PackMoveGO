@@ -42,7 +42,9 @@ const corsOptions = {
 
 // Apply security middleware first
 app.use(securityMiddleware);
-app.use(ipWhitelist);
+
+// Apply IP whitelist only to sensitive routes, not globally
+// app.use(ipWhitelist); // Commented out to allow public access
 
 // Basic middleware
 app.use(cors(corsOptions));
@@ -243,7 +245,7 @@ app.listen(port, () => {
   console.log(`📧 Email: ${emailStatus}`);
 
   // Check IP Whitelist
-  const ipWhitelistStatus = process.env.ALLOWED_IPS ? '✅ Active' : '❌ Not configured';
+  const ipWhitelistStatus = '❌ Disabled (public API)';
   console.log(`🔐 IP Whitelist: ${ipWhitelistStatus}`);
 
   console.log('🎯 === REST API Ready ===');

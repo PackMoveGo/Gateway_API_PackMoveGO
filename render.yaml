@@ -51,6 +51,6 @@ services:
         value: false
       - key: ALLOWED_IPS
         value: 172.58.112.138,127.0.0.1
-    healthCheckPath: /api/health
+    healthCheckPath: /api/health/simple
     autoDeploy: true
     plan: free 

@@ -144,30 +144,10 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
     return next();
   }
   
-  // In production, be more strict about access control
-  if (AUTH_CONFIG.IS_PRODUCTION) {
-    // Allow frontend requests (by domain or IP)
-    if (isFrontendRequest(req)) {
-      console.log(`✅ Frontend request allowed from ${req.headers.origin || clientIp}`);
-      return next();
-    }
-    
-    // For all other requests in production, require authentication or IP whitelist
-    if (!isAllowedIp(clientIp) && !isAuthenticated(req)) {
-      console.log(`🚫 Unauthorized access attempt from IP: ${clientIp}`);
-      return res.status(403).json({
-        success: false,
-        message: 'Access Forbidden',
-        error: 'This endpoint is not available',
-        timestamp: new Date().toISOString()
-      });
-    }
-  } else {
-    // In development, be more lenient
-    if (isFrontendRequest(req)) {
-      console.log(`✅ Frontend request allowed from ${req.headers.origin || clientIp}`);
-      return next();
-    }
+  // Allow frontend requests (by domain or IP)
+  if (isFrontendRequest(req)) {
+    console.log(`✅ Frontend request allowed from ${req.headers.origin || clientIp}`);
+    return next();
   }
   
   // For authenticated users accessing dashboard, allow access
@@ -176,21 +156,21 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
     return next();
   }
   
-  // Check if IP is in allowed list
+  // If not authenticated, check if this is a login attempt or login page
+  if (requestPath === '/api/auth/login' || requestPath === '/login') {
+    return next(); // Allow access to login endpoint and page
+  }
+  
+  // For all other requests, check if IP is in allowed list
   if (!isAllowedIp(clientIp)) {
     console.log(`🚫 IP ${clientIp} not in allowed list, redirecting to ${AUTH_CONFIG.REDIRECT_URL}`);
     return res.redirect(302, AUTH_CONFIG.REDIRECT_URL);
   }
   
-  // For allowed IPs (except frontend), require authentication
+  // For allowed IPs, require authentication
   if (isAuthenticated(req)) {
     console.log(`✅ Authenticated access granted for IP: ${clientIp}`);
     return next();
-  }
-  
-  // If not authenticated, check if this is a login attempt or login page
-  if (requestPath === '/api/auth/login' || requestPath === '/login') {
-    return next(); // Allow access to login endpoint and page
   }
   
   // For all other requests from allowed IPs, require authentication

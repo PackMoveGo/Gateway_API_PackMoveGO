@@ -298,6 +298,29 @@ app.get('/', (req, res) => {
   });
 });
 
+// Handle root API URL redirect for unauthorized users
+app.get('/api', (req, res) => {
+  const clientIp = req.ip || req.socket.remoteAddress || '';
+  const origin = req.headers.origin;
+  
+  // Check if this is a frontend request
+  if (origin === 'https://www.packmovego.com' || origin === 'https://packmovego.com') {
+    return res.json({
+      message: 'PackMoveGO REST API',
+      status: 'running',
+      endpoints: {
+        health: '/api/health',
+        data: '/api/v0/:name',
+        content: '/api/v0/*'
+      }
+    });
+  }
+  
+  // Redirect unauthorized users to frontend
+  console.log(`🚫 Unauthorized access to API root from IP: ${clientIp}, redirecting to frontend`);
+  return res.redirect(302, 'https://www.packmovego.com');
+});
+
 // Simple test endpoint
 app.get('/health', (req, res) => {
   console.log(`✅ Health check request: ${req.path} from ${req.ip}`);

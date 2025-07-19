@@ -94,6 +94,25 @@ const corsOptions = {
 // Apply security middleware first
 app.use(securityMiddleware);
 
+// Serve login and dashboard pages BEFORE global auth middleware
+app.get('/login', (req, res) => {
+  const loginPagePath = path.join(__dirname, 'view', 'login.html');
+  if (fs.existsSync(loginPagePath)) {
+    res.sendFile(loginPagePath);
+  } else {
+    res.status(404).send('Login page not found');
+  }
+});
+
+app.get('/dashboard', (req, res) => {
+  const dashboardPath = path.join(__dirname, 'view', 'dashboard.html');
+  if (fs.existsSync(dashboardPath)) {
+    res.sendFile(dashboardPath);
+  } else {
+    res.status(404).send('Dashboard page not found');
+  }
+});
+
 // Apply authentication middleware globally in production
 if (process.env.NODE_ENV === 'production') {
   app.use(authMiddleware);
@@ -202,26 +221,6 @@ app.get('/api/health', (req, res) => {
       environment: process.env.NODE_ENV || 'development',
       timestamp: new Date().toISOString()
     });
-  }
-});
-
-// Serve login page
-app.get('/login', (req, res) => {
-  const loginPagePath = path.join(__dirname, 'view', 'login.html');
-  if (fs.existsSync(loginPagePath)) {
-    res.sendFile(loginPagePath);
-  } else {
-    res.status(404).send('Login page not found');
-  }
-});
-
-// Serve dashboard page
-app.get('/dashboard', (req, res) => {
-  const dashboardPath = path.join(__dirname, 'view', 'dashboard.html');
-  if (fs.existsSync(dashboardPath)) {
-    res.sendFile(dashboardPath);
-  } else {
-    res.status(404).send('Dashboard page not found');
   }
 });
 

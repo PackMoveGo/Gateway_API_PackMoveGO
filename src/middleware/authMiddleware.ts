@@ -38,34 +38,27 @@ function isFrontendRequest(req: Request): boolean {
   const origin = req.headers.origin;
   const referer = req.headers.referer;
   
-  // In production, be more strict about frontend verification
-  if (AUTH_CONFIG.IS_PRODUCTION) {
-    // Check origin header
-    if (origin && origin === AUTH_CONFIG.FRONTEND_DOMAIN) {
-      return true;
-    }
-    
-    // Check referer header
-    if (referer && referer.startsWith(AUTH_CONFIG.FRONTEND_DOMAIN)) {
-      return true;
-    }
-    
-    // Check if IP is the frontend IP
-    const clientIp = getClientIp(req);
-    return clientIp === AUTH_CONFIG.FRONTEND_IP;
-  }
-  
-  // In development, be more lenient
-  if (origin && (origin === AUTH_CONFIG.FRONTEND_DOMAIN || origin.includes('localhost'))) {
+  // Check origin header
+  if (origin && (origin === AUTH_CONFIG.FRONTEND_DOMAIN || origin === 'https://packmovego.com')) {
     return true;
   }
   
-  if (referer && (referer.startsWith(AUTH_CONFIG.FRONTEND_DOMAIN) || referer.includes('localhost'))) {
+  // Check referer header
+  if (referer && (referer.startsWith(AUTH_CONFIG.FRONTEND_DOMAIN) || referer.startsWith('https://packmovego.com'))) {
     return true;
   }
   
-  const clientIp = getClientIp(req);
-  return clientIp === AUTH_CONFIG.FRONTEND_IP;
+  // In development, also allow localhost
+  if (!AUTH_CONFIG.IS_PRODUCTION) {
+    if (origin && origin.includes('localhost')) {
+      return true;
+    }
+    if (referer && referer.includes('localhost')) {
+      return true;
+    }
+  }
+  
+  return false;
 }
 
 // Check if IP is the frontend IP
@@ -144,7 +137,13 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
     return next();
   }
   
-  // Allow frontend requests (by domain or IP)
+  // Always allow access to login page and auth endpoints
+  if (requestPath === '/login' || requestPath === '/api/auth/login' || requestPath === '/api/auth/logout' || requestPath === '/api/auth/status') {
+    console.log(`✅ Allowing access to auth endpoint: ${requestPath}`);
+    return next();
+  }
+  
+  // Always allow frontend requests (by domain or referer)
   if (isFrontendRequest(req)) {
     console.log(`✅ Frontend request allowed from ${req.headers.origin || clientIp}`);
     return next();
@@ -156,21 +155,10 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
     return next();
   }
   
-  // If not authenticated, check if this is a login attempt or login page
-  if (requestPath === '/api/auth/login' || requestPath === '/login') {
-    return next(); // Allow access to login endpoint and page
-  }
-  
-  // For all other requests, check if IP is in allowed list
+  // Check if IP is in allowed list - if NOT allowed, redirect to frontend
   if (!isAllowedIp(clientIp)) {
     console.log(`🚫 IP ${clientIp} not in allowed list, redirecting to ${AUTH_CONFIG.REDIRECT_URL}`);
     return res.redirect(302, AUTH_CONFIG.REDIRECT_URL);
-  }
-  
-  // For allowed IPs, require authentication
-  if (isAuthenticated(req)) {
-    console.log(`✅ Authenticated access granted for IP: ${clientIp}`);
-    return next();
   }
   
   // For all other requests from allowed IPs, require authentication

@@ -1,258 +1,86 @@
 import { Request, Response, NextFunction } from 'express';
 
-const allowedIps = (process.env.ALLOWED_IPS || '').split(',').map(ip => ip.trim()).filter(Boolean);
+// Configuration
+const SECURITY_CONFIG = {
+  // Enable IP whitelisting (set to true to enable strict mode)
+  ENABLE_IP_WHITELIST: process.env.ENABLE_IP_WHITELIST === 'true',
+  
+  // Allowed IPs from environment variable
+  ALLOWED_IPS: (process.env.ALLOWED_IPS || '').split(',').map(ip => ip.trim()).filter(Boolean),
+  
+  // Redirect URL for unauthorized access
+  REDIRECT_URL: process.env.REDIRECT_URL || 'https://www.packmovego.com',
+  
+  // Logging configuration
+  LOG_BLOCKED_REQUESTS: process.env.LOG_BLOCKED_REQUESTS !== 'false',
+  
+  // Development mode (allows all requests)
+  IS_DEVELOPMENT: process.env.NODE_ENV === 'development'
+};
 
-// Debug logging
-console.log('🔐 IP Whitelist Configuration:');
-console.log('ALLOWED_IPS env var:', process.env.ALLOWED_IPS);
-console.log('Parsed allowed IPs:', allowedIps);
-console.log('IP Whitelist Status:', allowedIps.length > 0 ? '✅ Active' : '❌ Not configured');
+// Trusted IP ranges for various services
+const TRUSTED_IP_RANGES = {
+  // Render's internal IPs
+  RENDER: [
+    '10.0.0.0/8',      // Private network
+    '172.16.0.0/12',   // Private network
+    '172.58.0.0/16',   // Render specific
+    '192.168.0.0/16',  // Private network
+    '127.0.0.1',       // Localhost
+    '::1',             // IPv6 localhost
+    '::ffff:127.0.0.1' // IPv6 localhost
+  ],
+  
+  // Vercel IP ranges (if you're using Vercel)
+  VERCEL: [
+    '76.76.21.0/24',   // Vercel's main range
+    '76.76.21.21',     // Specific Vercel IPs
+    '76.76.21.22',
+    '76.76.21.23',
+    '76.76.21.24',
+    '76.76.21.25',
+    '76.76.21.26',
+    '76.76.21.27',
+    '76.76.21.28',
+    '76.76.21.29',
+    '76.76.21.30'
+  ],
+  
+  // Cloudflare IPs (if using Cloudflare)
+  CLOUDFLARE: [
+    '173.245.48.0/20',
+    '103.21.244.0/22',
+    '103.22.200.0/22',
+    '103.31.4.0/22',
+    '141.101.64.0/18',
+    '108.162.192.0/18',
+    '190.93.240.0/20',
+    '188.114.96.0/20',
+    '197.234.240.0/22',
+    '198.41.128.0/17',
+    '162.158.0.0/15',
+    '104.16.0.0/13',
+    '104.24.0.0/14',
+    '172.64.0.0/13',
+    '131.0.72.0/22'
+  ]
+};
 
-// Vercel's IP ranges
-const VERCEL_IP_RANGES = [
-  '76.76.21.0/24',  // Vercel's main IP range
-  '76.76.21.21',    // Vercel's specific IP
-  '76.76.21.22',    // Vercel's specific IP
-  '76.76.21.23',    // Vercel's specific IP
-  '76.76.21.24',    // Vercel's specific IP
-  '76.76.21.25',    // Vercel's specific IP
-  '76.76.21.26',    // Vercel's specific IP
-  '76.76.21.27',    // Vercel's specific IP
-  '76.76.21.28',    // Vercel's specific IP
-  '76.76.21.29',    // Vercel's specific IP
-  '76.76.21.30',    // Vercel's specific IP
-  '76.76.21.31',    // Vercel's specific IP
-  '76.76.21.32',    // Vercel's specific IP
-  '76.76.21.33',    // Vercel's specific IP
-  '76.76.21.34',    // Vercel's specific IP
-  '76.76.21.35',    // Vercel's specific IP
-  '76.76.21.36',    // Vercel's specific IP
-  '76.76.21.37',    // Vercel's specific IP
-  '76.76.21.38',    // Vercel's specific IP
-  '76.76.21.39',    // Vercel's specific IP
-  '76.76.21.40',    // Vercel's specific IP
-  '76.76.21.41',    // Vercel's specific IP
-  '76.76.21.42',    // Vercel's specific IP
-  '76.76.21.43',    // Vercel's specific IP
-  '76.76.21.44',    // Vercel's specific IP
-  '76.76.21.45',    // Vercel's specific IP
-  '76.76.21.46',    // Vercel's specific IP
-  '76.76.21.47',    // Vercel's specific IP
-  '76.76.21.48',    // Vercel's specific IP
-  '76.76.21.49',    // Vercel's specific IP
-  '76.76.21.50',    // Vercel's specific IP
-  '76.76.21.51',    // Vercel's specific IP
-  '76.76.21.52',    // Vercel's specific IP
-  '76.76.21.53',    // Vercel's specific IP
-  '76.76.21.54',    // Vercel's specific IP
-  '76.76.21.55',    // Vercel's specific IP
-  '76.76.21.56',    // Vercel's specific IP
-  '76.76.21.57',    // Vercel's specific IP
-  '76.76.21.58',    // Vercel's specific IP
-  '76.76.21.59',    // Vercel's specific IP
-  '76.76.21.60',    // Vercel's specific IP
-  '76.76.21.61',    // Vercel's specific IP
-  '76.76.21.62',    // Vercel's specific IP
-  '76.76.21.63',    // Vercel's specific IP
-  '76.76.21.64',    // Vercel's specific IP
-  '76.76.21.65',    // Vercel's specific IP
-  '76.76.21.66',    // Vercel's specific IP
-  '76.76.21.67',    // Vercel's specific IP
-  '76.76.21.68',    // Vercel's specific IP
-  '76.76.21.69',    // Vercel's specific IP
-  '76.76.21.70',    // Vercel's specific IP
-  '76.76.21.71',    // Vercel's specific IP
-  '76.76.21.72',    // Vercel's specific IP
-  '76.76.21.73',    // Vercel's specific IP
-  '76.76.21.74',    // Vercel's specific IP
-  '76.76.21.75',    // Vercel's specific IP
-  '76.76.21.76',    // Vercel's specific IP
-  '76.76.21.77',    // Vercel's specific IP
-  '76.76.21.78',    // Vercel's specific IP
-  '76.76.21.79',    // Vercel's specific IP
-  '76.76.21.80',    // Vercel's specific IP
-  '76.76.21.81',    // Vercel's specific IP
-  '76.76.21.82',    // Vercel's specific IP
-  '76.76.21.83',    // Vercel's specific IP
-  '76.76.21.84',    // Vercel's specific IP
-  '76.76.21.85',    // Vercel's specific IP
-  '76.76.21.86',    // Vercel's specific IP
-  '76.76.21.87',    // Vercel's specific IP
-  '76.76.21.88',    // Vercel's specific IP
-  '76.76.21.89',    // Vercel's specific IP
-  '76.76.21.90',    // Vercel's specific IP
-  '76.76.21.91',    // Vercel's specific IP
-  '76.76.21.92',    // Vercel's specific IP
-  '76.76.21.93',    // Vercel's specific IP
-  '76.76.21.94',    // Vercel's specific IP
-  '76.76.21.95',    // Vercel's specific IP
-  '76.76.21.96',    // Vercel's specific IP
-  '76.76.21.97',    // Vercel's specific IP
-  '76.76.21.98',    // Vercel's specific IP
-  '76.76.21.99',    // Vercel's specific IP
-  '76.76.21.100',   // Vercel's specific IP
-  '76.76.21.101',   // Vercel's specific IP
-  '76.76.21.102',   // Vercel's specific IP
-  '76.76.21.103',   // Vercel's specific IP
-  '76.76.21.104',   // Vercel's specific IP
-  '76.76.21.105',   // Vercel's specific IP
-  '76.76.21.106',   // Vercel's specific IP
-  '76.76.21.107',   // Vercel's specific IP
-  '76.76.21.108',   // Vercel's specific IP
-  '76.76.21.109',   // Vercel's specific IP
-  '76.76.21.110',   // Vercel's specific IP
-  '76.76.21.111',   // Vercel's specific IP
-  '76.76.21.112',   // Vercel's specific IP
-  '76.76.21.113',   // Vercel's specific IP
-  '76.76.21.114',   // Vercel's specific IP
-  '76.76.21.115',   // Vercel's specific IP
-  '76.76.21.116',   // Vercel's specific IP
-  '76.76.21.117',   // Vercel's specific IP
-  '76.76.21.118',   // Vercel's specific IP
-  '76.76.21.119',   // Vercel's specific IP
-  '76.76.21.120',   // Vercel's specific IP
-  '76.76.21.121',   // Vercel's specific IP
-  '76.76.21.122',   // Vercel's specific IP
-  '76.76.21.123',   // Vercel's specific IP
-  '76.76.21.124',   // Vercel's specific IP
-  '76.76.21.125',   // Vercel's specific IP
-  '76.76.21.126',   // Vercel's specific IP
-  '76.76.21.127',   // Vercel's specific IP
-  '76.76.21.128',   // Vercel's specific IP
-  '76.76.21.129',   // Vercel's specific IP
-  '76.76.21.130',   // Vercel's specific IP
-  '76.76.21.131',   // Vercel's specific IP
-  '76.76.21.132',   // Vercel's specific IP
-  '76.76.21.133',   // Vercel's specific IP
-  '76.76.21.134',   // Vercel's specific IP
-  '76.76.21.135',   // Vercel's specific IP
-  '76.76.21.136',   // Vercel's specific IP
-  '76.76.21.137',   // Vercel's specific IP
-  '76.76.21.138',   // Vercel's specific IP
-  '76.76.21.139',   // Vercel's specific IP
-  '76.76.21.140',   // Vercel's specific IP
-  '76.76.21.141',   // Vercel's specific IP
-  '76.76.21.142',   // Vercel's specific IP
-  '76.76.21.143',   // Vercel's specific IP
-  '76.76.21.144',   // Vercel's specific IP
-  '76.76.21.145',   // Vercel's specific IP
-  '76.76.21.146',   // Vercel's specific IP
-  '76.76.21.147',   // Vercel's specific IP
-  '76.76.21.148',   // Vercel's specific IP
-  '76.76.21.149',   // Vercel's specific IP
-  '76.76.21.150',   // Vercel's specific IP
-  '76.76.21.151',   // Vercel's specific IP
-  '76.76.21.152',   // Vercel's specific IP
-  '76.76.21.153',   // Vercel's specific IP
-  '76.76.21.154',   // Vercel's specific IP
-  '76.76.21.155',   // Vercel's specific IP
-  '76.76.21.156',   // Vercel's specific IP
-  '76.76.21.157',   // Vercel's specific IP
-  '76.76.21.158',   // Vercel's specific IP
-  '76.76.21.159',   // Vercel's specific IP
-  '76.76.21.160',   // Vercel's specific IP
-  '76.76.21.161',   // Vercel's specific IP
-  '76.76.21.162',   // Vercel's specific IP
-  '76.76.21.163',   // Vercel's specific IP
-  '76.76.21.164',   // Vercel's specific IP
-  '76.76.21.165',   // Vercel's specific IP
-  '76.76.21.166',   // Vercel's specific IP
-  '76.76.21.167',   // Vercel's specific IP
-  '76.76.21.168',   // Vercel's specific IP
-  '76.76.21.169',   // Vercel's specific IP
-  '76.76.21.170',   // Vercel's specific IP
-  '76.76.21.171',   // Vercel's specific IP
-  '76.76.21.172',   // Vercel's specific IP
-  '76.76.21.173',   // Vercel's specific IP
-  '76.76.21.174',   // Vercel's specific IP
-  '76.76.21.175',   // Vercel's specific IP
-  '76.76.21.176',   // Vercel's specific IP
-  '76.76.21.177',   // Vercel's specific IP
-  '76.76.21.178',   // Vercel's specific IP
-  '76.76.21.179',   // Vercel's specific IP
-  '76.76.21.180',   // Vercel's specific IP
-  '76.76.21.181',   // Vercel's specific IP
-  '76.76.21.182',   // Vercel's specific IP
-  '76.76.21.183',   // Vercel's specific IP
-  '76.76.21.184',   // Vercel's specific IP
-  '76.76.21.185',   // Vercel's specific IP
-  '76.76.21.186',   // Vercel's specific IP
-  '76.76.21.187',   // Vercel's specific IP
-  '76.76.21.188',   // Vercel's specific IP
-  '76.76.21.189',   // Vercel's specific IP
-  '76.76.21.190',   // Vercel's specific IP
-  '76.76.21.191',   // Vercel's specific IP
-  '76.76.21.192',   // Vercel's specific IP
-  '76.76.21.193',   // Vercel's specific IP
-  '76.76.21.194',   // Vercel's specific IP
-  '76.76.21.195',   // Vercel's specific IP
-  '76.76.21.196',   // Vercel's specific IP
-  '76.76.21.197',   // Vercel's specific IP
-  '76.76.21.198',   // Vercel's specific IP
-  '76.76.21.199',   // Vercel's specific IP
-  '76.76.21.200',   // Vercel's specific IP
-  '76.76.21.201',   // Vercel's specific IP
-  '76.76.21.202',   // Vercel's specific IP
-  '76.76.21.203',   // Vercel's specific IP
-  '76.76.21.204',   // Vercel's specific IP
-  '76.76.21.205',   // Vercel's specific IP
-  '76.76.21.206',   // Vercel's specific IP
-  '76.76.21.207',   // Vercel's specific IP
-  '76.76.21.208',   // Vercel's specific IP
-  '76.76.21.209',   // Vercel's specific IP
-  '76.76.21.210',   // Vercel's specific IP
-  '76.76.21.211',   // Vercel's specific IP
-  '76.76.21.212',   // Vercel's specific IP
-  '76.76.21.213',   // Vercel's specific IP
-  '76.76.21.214',   // Vercel's specific IP
-  '76.76.21.215',   // Vercel's specific IP
-  '76.76.21.216',   // Vercel's specific IP
-  '76.76.21.217',   // Vercel's specific IP
-  '76.76.21.218',   // Vercel's specific IP
-  '76.76.21.219',   // Vercel's specific IP
-  '76.76.21.220',   // Vercel's specific IP
-  '76.76.21.221',   // Vercel's specific IP
-  '76.76.21.222',   // Vercel's specific IP
-  '76.76.21.223',   // Vercel's specific IP
-  '76.76.21.224',   // Vercel's specific IP
-  '76.76.21.225',   // Vercel's specific IP
-  '76.76.21.226',   // Vercel's specific IP
-  '76.76.21.227',   // Vercel's specific IP
-  '76.76.21.228',   // Vercel's specific IP
-  '76.76.21.229',   // Vercel's specific IP
-  '76.76.21.230',   // Vercel's specific IP
-  '76.76.21.231',   // Vercel's specific IP
-  '76.76.21.232',   // Vercel's specific IP
-  '76.76.21.233',   // Vercel's specific IP
-  '76.76.21.234',   // Vercel's specific IP
-  '76.76.21.235',   // Vercel's specific IP
-  '76.76.21.236',   // Vercel's specific IP
-  '76.76.21.237',   // Vercel's specific IP
-  '76.76.21.238',   // Vercel's specific IP
-  '76.76.21.239',   // Vercel's specific IP
-  '76.76.21.240',   // Vercel's specific IP
-  '76.76.21.241',   // Vercel's specific IP
-  '76.76.21.242',   // Vercel's specific IP
-  '76.76.21.243',   // Vercel's specific IP
-  '76.76.21.244',   // Vercel's specific IP
-  '76.76.21.245',   // Vercel's specific IP
-  '76.76.21.246',   // Vercel's specific IP
-  '76.76.21.247',   // Vercel's specific IP
-  '76.76.21.248',   // Vercel's specific IP
-  '76.76.21.249',   // Vercel's specific IP
-  '76.76.21.250',   // Vercel's specific IP
-  '76.76.21.251',   // Vercel's specific IP
-  '76.76.21.252',   // Vercel's specific IP
-  '76.76.21.253',   // Vercel's specific IP
-  '76.76.21.254',   // Vercel's specific IP
-  '76.76.21.255'    // Vercel's specific IP
-];
+// Debug logging on startup
+console.log('🔐 === IP Security Configuration ===');
+console.log(`Security Mode: ${SECURITY_CONFIG.ENABLE_IP_WHITELIST ? '🔒 STRICT (IP Whitelist Enabled)' : '🌐 PUBLIC (IP Whitelist Disabled)'}`);
+console.log(`Environment: ${SECURITY_CONFIG.IS_DEVELOPMENT ? '🛠️ Development' : '🚀 Production'}`);
+console.log(`Redirect URL: ${SECURITY_CONFIG.REDIRECT_URL}`);
+console.log(`Allowed IPs: ${SECURITY_CONFIG.ALLOWED_IPS.length > 0 ? SECURITY_CONFIG.ALLOWED_IPS.join(', ') : 'None configured'}`);
+console.log(`Log Blocked: ${SECURITY_CONFIG.LOG_BLOCKED_REQUESTS ? '✅ Enabled' : '❌ Disabled'}`);
+console.log('=====================================');
 
 // Function to check if an IP is in a CIDR range
 function isIpInRange(ip: string, cidr: string): boolean {
   if (!cidr.includes('/')) {
     return ip === cidr;
   }
+  
   const [range, bits = '32'] = cidr.split('/');
   const ipAddr = ipToLong(ip);
   const rangeAddr = ipToLong(range);
@@ -260,59 +88,91 @@ function isIpInRange(ip: string, cidr: string): boolean {
   return (ipAddr & mask) === (rangeAddr & mask);
 }
 
+// Convert IP to long integer
 function ipToLong(ip: string): number {
   return ip.split('.').reduce((acc, octet) => (acc << 8) + parseInt(octet, 10), 0) >>> 0;
 }
 
-export function ipWhitelist(req: Request, res: Response, next: NextFunction) {
-  // Get the real client IP from various headers
+// Get real client IP from various headers
+function getClientIp(req: Request): string {
   let clientIp = req.headers['x-forwarded-for']?.toString().split(',')[0].trim() || 
                  req.headers['x-real-ip']?.toString() || 
                  req.headers['cf-connecting-ip']?.toString() ||
+                 req.headers['x-client-ip']?.toString() ||
                  req.socket.remoteAddress || '';
+  
   // Remove IPv6 prefix if present
   if (clientIp.startsWith('::ffff:')) {
     clientIp = clientIp.substring(7);
   }
   
-  // Debug logging
-  console.log(`🔐 IP Check - Client IP: ${clientIp}, Path: ${req.path}`);
+  return clientIp;
+}
+
+// Check if IP is in trusted ranges
+function isTrustedIp(ip: string): boolean {
+  // Check Render IPs
+  if (TRUSTED_IP_RANGES.RENDER.some(range => isIpInRange(ip, range))) {
+    return true;
+  }
   
-  // If no whitelist is configured, allow all requests
-  if (allowedIps.length === 0) {
-    console.log(`✅ IP ${clientIp} allowed (no whitelist configured)`);
+  // Check Vercel IPs
+  if (TRUSTED_IP_RANGES.VERCEL.some(range => isIpInRange(ip, range))) {
+    return true;
+  }
+  
+  // Check Cloudflare IPs
+  if (TRUSTED_IP_RANGES.CLOUDFLARE.some(range => isIpInRange(ip, range))) {
+    return true;
+  }
+  
+  return false;
+}
+
+// Main IP whitelist middleware
+export function ipWhitelist(req: Request, res: Response, next: NextFunction) {
+  const clientIp = getClientIp(req);
+  const requestPath = req.path;
+  const userAgent = req.get('User-Agent') || 'Unknown';
+  
+  // Always allow health checks
+  if (requestPath === '/api/health' || requestPath === '/api/health/simple' || requestPath === '/health') {
+    console.log(`✅ Health check allowed from ${clientIp}`);
     return next();
   }
   
-  // Allow if in allowed IPs
-  if (allowedIps.includes(clientIp)) {
-    console.log(`✅ IP ${clientIp} allowed (whitelisted)`);
+  // In development, allow all requests
+  if (SECURITY_CONFIG.IS_DEVELOPMENT) {
+    console.log(`✅ Development mode - allowing ${clientIp} for ${requestPath}`);
     return next();
   }
   
-  // Allow if in Vercel IPs
-  if (VERCEL_IP_RANGES.some(range => isIpInRange(clientIp, range))) {
-    console.log(`✅ IP ${clientIp} allowed (Vercel range)`);
+  // If IP whitelist is disabled, allow all requests
+  if (!SECURITY_CONFIG.ENABLE_IP_WHITELIST) {
+    console.log(`✅ Public API mode - allowing ${clientIp} for ${requestPath}`);
     return next();
   }
   
-  // Allow Render's internal IPs (common Render IPs)
-  const renderIps = [
-    '10.0.0.0/8',    // Private network range
-    '172.16.0.0/12', // Private network range
-    '172.58.0.0/16', // Render's specific range (includes 172.58.x.x)
-    '192.168.0.0/16', // Private network range
-    '127.0.0.1',     // Localhost
-    '::1'            // IPv6 localhost
-  ];
-  
-  if (renderIps.some(range => isIpInRange(clientIp, range))) {
-    console.log(`✅ IP ${clientIp} allowed (Render internal)`);
+  // Check if IP is explicitly allowed
+  if (SECURITY_CONFIG.ALLOWED_IPS.includes(clientIp)) {
+    console.log(`✅ IP ${clientIp} explicitly allowed for ${requestPath}`);
     return next();
   }
   
-  // For public APIs, allow all requests by default
-  // Only block if explicitly configured to be restrictive
-  console.log(`✅ IP ${clientIp} allowed (public API access)`);
-  return next();
-} 
+  // Check if IP is in trusted ranges
+  if (isTrustedIp(clientIp)) {
+    console.log(`✅ IP ${clientIp} in trusted range for ${requestPath}`);
+    return next();
+  }
+  
+  // Block the request and redirect
+  if (SECURITY_CONFIG.LOG_BLOCKED_REQUESTS) {
+    console.warn(`🚫 BLOCKED: IP ${clientIp} accessing ${requestPath} (User-Agent: ${userAgent})`);
+  }
+  
+  // Redirect to main website
+  res.redirect(302, SECURITY_CONFIG.REDIRECT_URL);
+}
+
+// Export configuration for other modules
+export { SECURITY_CONFIG }; 

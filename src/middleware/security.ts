@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
-// import { ipWhitelist } from './ipWhitelist';
+import { ipWhitelist, SECURITY_CONFIG } from './ipWhitelist';
 
 // Rate limiting configuration - stricter for production
 const apiLimiter = rateLimit({
@@ -13,10 +13,17 @@ const apiLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  // Skip rate limiting for Vercel IPs
+  // Skip rate limiting for trusted IPs
   skip: (req) => {
     const clientIp = req.ip || req.socket.remoteAddress || '';
-    return clientIp.startsWith('76.76.21.');
+    // Skip rate limiting for health checks and trusted IPs
+    return req.path === '/api/health' || 
+           req.path === '/api/health/simple' || 
+           req.path === '/health' ||
+           clientIp.startsWith('76.76.21.') ||
+           clientIp.startsWith('10.') ||
+           clientIp.startsWith('172.') ||
+           clientIp.startsWith('192.168.');
   }
 });
 
@@ -50,7 +57,8 @@ const securityHeaders = process.env.NODE_ENV === 'development'
             "https://*.vercel.app",
             "https://pack-go-movers-backend.onrender.com",
             "https://www.packmovego.com",
-            "https://packmovego.com"
+            "https://packmovego.com",
+            "https://api.packmovego.com"
           ],
           fontSrc: ["'self'"],
           objectSrc: ["'none'"],
@@ -111,7 +119,7 @@ const validateRequest = (req: Request, res: Response, next: NextFunction) => {
 
   for (const pattern of attackPatterns) {
     if (pattern.test(combinedRequest)) {
-      console.warn(`Potential attack detected from IP: ${req.ip}, Path: ${requestPath}`);
+      console.warn(`🚫 Attack detected from IP: ${req.ip}, Path: ${requestPath}`);
       return res.status(403).json({
         success: false,
         message: 'Invalid request detected'
@@ -127,7 +135,7 @@ const requestSizeLimiter = (req: Request, res: Response, next: NextFunction) => 
   const MAX_REQUEST_SIZE = 1024 * 1024; // 1MB
 
   if (req.headers['content-length'] && parseInt(req.headers['content-length']) > MAX_REQUEST_SIZE) {
-    console.warn(`Large request detected from IP: ${req.ip}`);
+    console.warn(`🚫 Large request detected from IP: ${req.ip}`);
     return res.status(413).json({
       success: false,
       message: 'Request entity too large'
@@ -158,12 +166,35 @@ const additionalSecurityHeaders = (req: Request, res: Response, next: NextFuncti
   next();
 };
 
+// Security monitoring middleware
+const securityMonitoring = (req: Request, res: Response, next: NextFunction) => {
+  const clientIp = req.ip || req.socket.remoteAddress || '';
+  const userAgent = req.get('User-Agent') || 'Unknown';
+  const requestPath = req.path;
+  
+  // Log suspicious requests
+  if (userAgent.includes('bot') || userAgent.includes('crawler') || userAgent.includes('spider')) {
+    console.log(`🤖 Bot detected: ${userAgent} from ${clientIp} accessing ${requestPath}`);
+  }
+  
+  // Log requests to sensitive endpoints
+  if (requestPath.includes('admin') || requestPath.includes('config') || requestPath.includes('debug')) {
+    console.warn(`⚠️ Sensitive endpoint accessed: ${requestPath} by ${clientIp}`);
+  }
+  
+  next();
+};
+
 // Combine all security middleware
 export const securityMiddleware = [
   securityHeaders,
-  // ipWhitelist, // Uncomment if you want to use IP whitelisting
+  securityMonitoring,
+  ipWhitelist, // Enable IP whitelisting
   apiLimiter,
   validateRequest,
   requestSizeLimiter,
   additionalSecurityHeaders
-]; 
+];
+
+// Export security configuration
+export { SECURITY_CONFIG }; 

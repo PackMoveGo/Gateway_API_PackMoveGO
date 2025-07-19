@@ -13,7 +13,9 @@
     "postinstall": "npm run build:backend",
     "test:stability": "node test-server-stability.js",
     "test:stability:prod": "TEST_URL=https://api.packmovego.com node test-server-stability.js",
-    "test:prod": "node test-production.js"
+    "test:prod": "node test-production.js",
+    "test:security": "node test-security.js",
+    "test:security:prod": "node test-security.js --prod"
   },
   "dependencies": {
     "@types/bcryptjs": "^2.4.6",

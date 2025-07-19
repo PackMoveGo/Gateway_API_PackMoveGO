@@ -174,7 +174,8 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
     });
   }
   
-  // For non-API requests, redirect to login page
+  // For non-API requests from authorized IPs, redirect to login page
+  console.log(`🔐 Redirecting authorized IP ${clientIp} to login page`);
   return res.redirect(302, '/login');
 }
 

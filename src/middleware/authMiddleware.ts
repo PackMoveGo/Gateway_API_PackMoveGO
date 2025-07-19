@@ -11,7 +11,9 @@ const AUTH_CONFIG = {
   ADMIN_PASSWORD: process.env.ADMIN_PASSWORD || 'packmovego2024',
   FRONTEND_IP: process.env.ALLOWED_IPS?.split(',')[0]?.trim() || '76.76.21.21',
   ALLOWED_IPS: (process.env.ALLOWED_IPS || '').split(',').map(ip => ip.trim()).filter(Boolean),
-  REDIRECT_URL: process.env.REDIRECT_URL || 'https://www.packmovego.com'
+  REDIRECT_URL: process.env.REDIRECT_URL || 'https://www.packmovego.com',
+  FRONTEND_DOMAIN: 'https://www.packmovego.com',
+  API_DOMAIN: 'https://api.packmovego.com'
 };
 
 // Get client IP from various headers
@@ -28,6 +30,26 @@ function getClientIp(req: Request): string {
   }
   
   return clientIp;
+}
+
+// Check if request is from the frontend domain
+function isFrontendRequest(req: Request): boolean {
+  const origin = req.headers.origin;
+  const referer = req.headers.referer;
+  
+  // Check origin header
+  if (origin && origin === AUTH_CONFIG.FRONTEND_DOMAIN) {
+    return true;
+  }
+  
+  // Check referer header
+  if (referer && referer.startsWith(AUTH_CONFIG.FRONTEND_DOMAIN)) {
+    return true;
+  }
+  
+  // Check if IP is the frontend IP
+  const clientIp = getClientIp(req);
+  return clientIp === AUTH_CONFIG.FRONTEND_IP;
 }
 
 // Check if IP is the frontend IP
@@ -91,17 +113,24 @@ function isAuthenticated(req: Request): boolean {
 export function authMiddleware(req: Request, res: Response, next: NextFunction) {
   const clientIp = getClientIp(req);
   const requestPath = req.path;
+  const method = req.method;
   
-  console.log(`🔐 Auth check for IP: ${clientIp} accessing: ${requestPath}`);
+  console.log(`🔐 Auth check for IP: ${clientIp} accessing: ${requestPath} (${method})`);
+  
+  // Always allow OPTIONS requests for CORS preflight
+  if (method === 'OPTIONS') {
+    console.log(`✅ Allowing OPTIONS request for CORS preflight`);
+    return next();
+  }
   
   // Always allow health checks
   if (requestPath === '/api/health' || requestPath === '/api/health/simple' || requestPath === '/health') {
     return next();
   }
   
-  // Frontend IP gets direct access without password
-  if (isFrontendIp(clientIp)) {
-    console.log(`✅ Frontend IP ${clientIp} granted direct access`);
+  // Allow frontend requests (by domain or IP)
+  if (isFrontendRequest(req)) {
+    console.log(`✅ Frontend request allowed from ${req.headers.origin || clientIp}`);
     return next();
   }
   
@@ -219,14 +248,15 @@ export function handleLogout(req: Request, res: Response) {
 export function checkAuthStatus(req: Request, res: Response) {
   const clientIp = getClientIp(req);
   const isAuth = isAuthenticated(req);
+  const isFrontend = isFrontendRequest(req);
   
   return res.json({
     success: true,
     authenticated: isAuth,
     ip: clientIp,
-    isFrontend: isFrontendIp(clientIp),
+    isFrontend: isFrontend,
     isAllowed: isAllowedIp(clientIp),
-    requiresPassword: isAllowedIp(clientIp) && !isFrontendIp(clientIp)
+    requiresPassword: isAllowedIp(clientIp) && !isFrontend
   });
 }
 

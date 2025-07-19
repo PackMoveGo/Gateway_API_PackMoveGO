@@ -11,10 +11,9 @@ import sshRoutes from './route/sshRoutes';
 import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';
-import { securityMiddleware } from './middleware/security';
+import { securityMiddleware, authMiddleware } from './middleware/security';
 import dataRoutes from './route/dataRoutes';
 import { ipWhitelist } from './middleware/ipWhitelist';
-import { authMiddleware } from './middleware/authMiddleware';
 import serverMonitor from './util/monitor';
 // Import SSH server but don't start it immediately
 import { sshServer, SSH_CONFIG } from './ssh/sshServer';
@@ -224,10 +223,14 @@ app.get('/dashboard', (req, res) => {
 // API Routes with proper status codes
 app.use('/api/auth', authRoutes);
 app.use('/api/ssh', sshRoutes);
-app.use('/api', signupRoutes);
-app.use('/api', sectionRoutes);
-app.use('/api', securityRoutes);
-app.use('/api', prelaunchRoutes);
+
+// Protected routes that require authentication
+app.use('/api/signup', authMiddleware, signupRoutes);
+app.use('/api/sections', authMiddleware, sectionRoutes);
+app.use('/api/security', authMiddleware, securityRoutes);
+app.use('/api/prelaunch', authMiddleware, prelaunchRoutes);
+
+// Public data routes that frontend can access without authentication
 app.use('/api', dataRoutes);
 
 // Catch-all for v0 endpoints without /api prefix (for proxy configurations)

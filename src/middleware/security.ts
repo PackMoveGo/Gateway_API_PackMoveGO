@@ -186,16 +186,15 @@ const securityMonitoring = (req: Request, res: Response, next: NextFunction) => 
   next();
 };
 
-// Combine all security middleware
+// Combine all security middleware (without global auth middleware)
 export const securityMiddleware = [
   securityHeaders,
   securityMonitoring,
-  authMiddleware, // Use new authentication middleware
   apiLimiter,
   validateRequest,
   requestSizeLimiter,
   additionalSecurityHeaders
 ];
 
-// Export security configuration
-export { SECURITY_CONFIG }; 
+// Export security configuration and auth middleware for specific routes
+export { SECURITY_CONFIG, authMiddleware }; 

@@ -96,19 +96,27 @@ app.use(securityMiddleware);
 
 // Serve login and dashboard pages BEFORE global auth middleware
 app.get('/login', (req, res) => {
-  const loginPagePath = path.join(__dirname, 'view', 'login.html');
+  // Use a more reliable path resolution for production
+  const loginPagePath = path.join(process.cwd(), 'src', 'view', 'login.html');
+  console.log(`🔐 Serving login page from: ${loginPagePath}`);
+  
   if (fs.existsSync(loginPagePath)) {
     res.sendFile(loginPagePath);
   } else {
+    console.error(`❌ Login page not found at: ${loginPagePath}`);
     res.status(404).send('Login page not found');
   }
 });
 
 app.get('/dashboard', (req, res) => {
-  const dashboardPath = path.join(__dirname, 'view', 'dashboard.html');
+  // Use a more reliable path resolution for production
+  const dashboardPath = path.join(process.cwd(), 'src', 'view', 'dashboard.html');
+  console.log(`📊 Serving dashboard from: ${dashboardPath}`);
+  
   if (fs.existsSync(dashboardPath)) {
     res.sendFile(dashboardPath);
   } else {
+    console.error(`❌ Dashboard not found at: ${dashboardPath}`);
     res.status(404).send('Dashboard page not found');
   }
 });

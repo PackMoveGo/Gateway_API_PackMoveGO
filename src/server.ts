@@ -104,7 +104,22 @@ app.get('/login', (req, res) => {
     res.sendFile(loginPagePath);
   } else {
     console.error(`❌ Login page not found at: ${loginPagePath}`);
-    res.status(404).send('Login page not found');
+    // Send a simple login page as fallback
+    res.status(200).send(`
+      <!DOCTYPE html>
+      <html>
+      <head><title>PackMoveGO - Admin Login</title></head>
+      <body>
+        <h1>PackMoveGO Admin Login</h1>
+        <p>Your IP is authorized. Please enter the admin password:</p>
+        <form action="/api/auth/login" method="POST">
+          <input type="password" name="password" placeholder="Admin Password" required>
+          <button type="submit">Login</button>
+        </form>
+        <p><small>Debug: Login page not found at ${loginPagePath}</small></p>
+      </body>
+      </html>
+    `);
   }
 });
 
@@ -119,6 +134,23 @@ app.get('/dashboard', (req, res) => {
     console.error(`❌ Dashboard not found at: ${dashboardPath}`);
     res.status(404).send('Dashboard page not found');
   }
+});
+
+// Debug route to check file structure
+app.get('/debug', (req, res) => {
+  const cwd = process.cwd();
+  const srcPath = path.join(cwd, 'src');
+  const viewPath = path.join(srcPath, 'view');
+  const loginPath = path.join(viewPath, 'login.html');
+  
+  res.json({
+    cwd,
+    srcExists: fs.existsSync(srcPath),
+    viewExists: fs.existsSync(viewPath),
+    loginExists: fs.existsSync(loginPath),
+    files: fs.existsSync(viewPath) ? fs.readdirSync(viewPath) : [],
+    loginPath
+  });
 });
 
 // Apply authentication middleware globally in production

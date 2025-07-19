@@ -94,6 +94,45 @@ const corsOptions = {
 // Apply security middleware first
 app.use(securityMiddleware);
 
+// IP check middleware for login and dashboard routes
+app.use(['/login', '/dashboard'], (req, res, next) => {
+  // Use the same IP detection method as auth middleware
+  let clientIp = 'unknown';
+  
+  if (req.headers['x-forwarded-for']) {
+    const xff = req.headers['x-forwarded-for'];
+    clientIp = (typeof xff === 'string' ? xff : xff[0])?.split(',')[0]?.trim() || 'unknown';
+  } else if (req.headers['x-real-ip']) {
+    clientIp = req.headers['x-real-ip'] as string;
+  } else if (req.connection.remoteAddress) {
+    clientIp = req.connection.remoteAddress;
+  } else if (req.socket.remoteAddress) {
+    clientIp = req.socket.remoteAddress;
+  } else if (req.ip) {
+    clientIp = req.ip;
+  }
+  
+  console.log(`🔐 IP check for ${req.path}: ${clientIp}`);
+  
+  // Allow frontend requests
+  if (req.headers.origin === 'https://www.packmovego.com' || req.headers.origin === 'https://packmovego.com') {
+    console.log(`✅ Frontend request allowed for ${req.path}`);
+    return next();
+  }
+  
+  // Check if IP is in allowed list
+  const allowedIps = process.env.ALLOWED_IPS?.split(',') || [];
+  console.log(`🔍 Checking IP ${clientIp} against allowed IPs: ${allowedIps.join(', ')}`);
+  
+  if (!allowedIps.includes(clientIp)) {
+    console.log(`🚫 Unauthorized IP ${clientIp} trying to access ${req.path}, redirecting to frontend`);
+    return res.redirect(302, 'https://www.packmovego.com');
+  }
+  
+  console.log(`✅ Authorized IP ${clientIp} accessing ${req.path}`);
+  next();
+});
+
 // Serve login and dashboard pages BEFORE global auth middleware
 app.get('/login', (req, res) => {
   // Use a more reliable path resolution for production

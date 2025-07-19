@@ -137,16 +137,16 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
     return next();
   }
   
-  // Always allow access to login page and auth endpoints
-  if (requestPath === '/login' || requestPath === '/api/auth/login' || requestPath === '/api/auth/logout' || requestPath === '/api/auth/status') {
-    console.log(`✅ Allowing access to auth endpoint: ${requestPath}`);
-    return next();
-  }
-  
   // Always allow frontend requests (by domain or referer)
   if (isFrontendRequest(req)) {
     console.log(`✅ Frontend request allowed from ${req.headers.origin || clientIp}`);
     return next();
+  }
+  
+  // Check if IP is in allowed list - if NOT allowed, redirect to frontend
+  if (!isAllowedIp(clientIp)) {
+    console.log(`🚫 IP ${clientIp} not in allowed list, redirecting to ${AUTH_CONFIG.REDIRECT_URL}`);
+    return res.redirect(302, AUTH_CONFIG.REDIRECT_URL);
   }
   
   // For authenticated users accessing dashboard, allow access
@@ -155,10 +155,10 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
     return next();
   }
   
-  // Check if IP is in allowed list - if NOT allowed, redirect to frontend
-  if (!isAllowedIp(clientIp)) {
-    console.log(`🚫 IP ${clientIp} not in allowed list, redirecting to ${AUTH_CONFIG.REDIRECT_URL}`);
-    return res.redirect(302, AUTH_CONFIG.REDIRECT_URL);
+  // For authorized IPs, allow access to login page and auth endpoints
+  if (requestPath === '/login' || requestPath === '/api/auth/login' || requestPath === '/api/auth/logout' || requestPath === '/api/auth/status') {
+    console.log(`✅ Authorized IP ${clientIp} accessing auth endpoint: ${requestPath}`);
+    return next();
   }
   
   // For all other requests from allowed IPs, require authentication

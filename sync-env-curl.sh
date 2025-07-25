@@ -29,7 +29,7 @@ echo "Setting ALLOWED_IPS..."
 curl -X PATCH "https://api.render.com/v1/services/$SERVICE_ID/env-vars" \
   -H "Authorization: Bearer $API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"envVars":{"ALLOWED_IPS":"76.76.21.21,172.58.117.103,172.58.119.213"}}'
+  -d '{"envVars":{"ALLOWED_IPS":"76.76.21.21,172.58.117.103,172.58.119.213,79.127.231.179,185.159.156.71,127.0.0.1,::1,185.159.156.121,173.230.100.254"}}'
 
 echo ""
 echo "Setting ADMIN_PASSWORD..."

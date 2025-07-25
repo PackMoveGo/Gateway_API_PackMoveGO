@@ -454,48 +454,7 @@ if (envConfig.NODE_ENV === 'production') {
 
 
 
-// Root endpoint - API info only
-app.get('/', (req, res) => {
-  const dbStatus = getConnectionStatus();
-  return res.status(200).json({
-    message: 'PackMoveGO REST API',
-    version: '1.0.0',
-    status: 'running',
-    environment: process.env.NODE_ENV || 'development',
-    database: {
-      connected: dbStatus,
-      status: dbStatus ? 'connected' : 'disconnected'
-    },
-    uptime: Math.floor(process.uptime()),
-    timestamp: new Date().toISOString(),
-    endpoints: {
-      health: '/api/health',
-      data: '/api/data/:name',
-      content: {
-        blog: '/v0/blog',
-        about: '/v0/about',
-        nav: '/v0/nav',
-        contact: '/v0/contact',
-        referral: '/v0/referral',
-        reviews: '/v0/reviews',
-        locations: '/v0/locations',
-        supplies: '/v0/supplies',
-        services: '/v0/services',
-        testimonials: '/v0/testimonials'
-      },
-      enhancedServices: {
-        services: '/api/v1/services',
-        serviceById: '/api/v1/services/:serviceId',
-        quote: '/api/v1/services/:serviceId/quote',
-        analytics: '/api/v1/services/analytics'
-      },
-      signup: '/api/signup',
-      sections: '/api/sections',
-      security: '/api/security',
-      prelaunch: '/api/prelaunch'
-    }
-  });
-});
+
 
 // Handle root API URL redirect for unauthorized users
 app.get('/api', (req, res) => {

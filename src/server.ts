@@ -72,6 +72,31 @@ try {
 const app = express();
 const port = envConfig.PORT;
 
+// === IMMEDIATE HEALTH CHECK (for Render) ===
+// This must be defined before any middleware that might block requests
+app.get('/api/health', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    environment: process.env.NODE_ENV || 'development',
+    timestamp: new Date().toISOString()
+  });
+});
+
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    message: 'Server is running',
+    timestamp: new Date().toISOString()
+  });
+});
+
+app.get('/api/health/simple', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Global error handlers to prevent crashes
 process.on('uncaughtException', (error) => {
   logError('❌ Uncaught Exception:', error);
@@ -305,8 +330,8 @@ app.use((req, res, next) => {
   next();
 });
 
-// Health check endpoint - optimized for Render
-app.get('/api/health', (req, res) => {
+// Health check endpoint - optimized for Render (detailed version)
+app.get('/api/health/detailed', (req, res) => {
   console.log(`✅ API Health check request: ${req.path} from ${req.ip}`);
   
   // Set a timeout for health checks to prevent hanging
@@ -526,21 +551,12 @@ app.get('/api', (req, res) => {
   return res.redirect(302, 'https://www.packmovego.com');
 });
 
-// Simple test endpoint
-app.get('/health', (req, res) => {
+// Detailed health check endpoint (for monitoring)
+app.get('/health/detailed', (req, res) => {
   console.log(`✅ Health check request: ${req.path} from ${req.ip}`);
   res.status(200).json({
     status: 'ok',
     message: 'Server is running',
-    timestamp: new Date().toISOString()
-  });
-});
-
-// Additional simple health check for Render
-app.get('/api/health/simple', (req, res) => {
-  console.log(`✅ Simple health check request: ${req.path} from ${req.ip}`);
-  res.status(200).json({
-    status: 'ok',
     timestamp: new Date().toISOString()
   });
 });

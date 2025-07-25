@@ -183,8 +183,8 @@ const corsOptions = {
     'http://localhost:5001',
     ...corsOrigins
   ].filter((origin, index, arr) => arr.indexOf(origin) === index), // Remove duplicates
-  methods: envConfig.CORS_METHODS,
-  allowedHeaders: envConfig.CORS_ALLOWED_HEADERS,
+  methods: envConfig.CORS_METHODS || ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: envConfig.CORS_ALLOWED_HEADERS || ['Content-Type', 'Authorization', 'x-api-key'],
   credentials: true,
   optionsSuccessStatus: 200,
   preflightContinue: false

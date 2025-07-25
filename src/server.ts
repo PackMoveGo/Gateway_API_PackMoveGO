@@ -433,6 +433,75 @@ if (envConfig.NODE_ENV !== 'production') {
   });
 }
 
+// === PRODUCTION MODE FIXES ===
+if (envConfig.NODE_ENV === 'production') {
+  // 1. Serve /v0/* routes directly for frontend
+  const v0DataFiles = [
+    'blog', 'about', 'nav', 'contact', 'referral', 'reviews', 'locations', 'supplies', 'services', 'testimonials'
+  ];
+  app.get(['/v0/:name', '/v0/:name/'], (req, res, next) => {
+    const { name } = req.params;
+    if (v0DataFiles.includes(name)) {
+      try {
+        const data = require(`./data/${name.charAt(0).toUpperCase() + name.slice(1)}.json`);
+        return res.json(data);
+      } catch (e) {
+        try {
+          // Try lowercase fallback
+          const data = require(`./data/${name}.json`);
+          return res.json(data);
+        } catch (err) {
+          return res.status(404).json({ error: 'Not found' });
+        }
+      }
+    }
+    next();
+  });
+
+  // 2. Serve root with API info for frontend
+  app.get('/', (req, res) => {
+    const dbStatus = getConnectionStatus();
+    return res.status(200).json({
+      message: 'Welcome to PackMoveGO REST API',
+      version: '1.0.0',
+      status: 'running',
+      environment: 'production',
+      database: {
+        connected: dbStatus,
+        status: dbStatus ? 'connected' : 'disconnected'
+      },
+      uptime: Math.floor(process.uptime()),
+      timestamp: new Date().toISOString(),
+      endpoints: {
+        health: '/api/health',
+        data: '/api/data/:name',
+        content: {
+          blog: '/api/v0/blog',
+          about: '/api/v0/about',
+          nav: '/api/v0/nav',
+          contact: '/api/v0/contact',
+          referral: '/api/v0/referral',
+          reviews: '/api/v0/reviews',
+          locations: '/api/v0/locations',
+          supplies: '/api/v0/supplies',
+          services: '/api/v0/services',
+          testimonials: '/api/v0/testimonials'
+        },
+        enhancedServices: {
+          services: '/api/v1/services',
+          serviceById: '/api/v1/services/:serviceId',
+          quote: '/api/v1/services/:serviceId/quote',
+          analytics: '/api/v1/services/analytics'
+        },
+        signup: '/api/signup',
+        sections: '/api/sections',
+        security: '/api/security',
+        prelaunch: '/api/prelaunch'
+      }
+    });
+  });
+}
+
 // Catch-all for any other endpoints that might be coming without /api prefix
 app.use('/*', (req, res, next) => {
   // Skip if it's already an API route or health check
@@ -450,7 +519,7 @@ app.use('/*', (req, res, next) => {
   next();
 });
 
-// Root endpoint
+// Root endpoint (fallback for non-production modes)
 app.get('/', (req, res) => {
   // Use the same IP detection method as other middleware
   let clientIp = 'unknown';

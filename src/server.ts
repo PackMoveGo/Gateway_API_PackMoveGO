@@ -502,6 +502,7 @@ app.use('/*', (req, res, next) => {
   
   // Let /v0/ routes pass through without redirect
   if (req.path.startsWith('/v0/')) {
+    console.log(`✅ Allowing /v0/ route: ${req.path}`);
     return next();
   }
   

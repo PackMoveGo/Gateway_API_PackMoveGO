@@ -16,6 +16,10 @@ import dataRoutes from './route/dataRoutes';
 import servicesRoutes from './route/servicesRoutes';
 import { ipWhitelist } from './middleware/ipWhitelist';
 import serverMonitor from './util/monitor';
+import { performanceMiddleware } from './util/performance-monitor';
+import analyticsRoutes from './route/analyticsRoutes';
+import { advancedRateLimiter, burstProtection } from './util/api-limiter';
+import { backupSystem } from './util/backup-system';
 // Import SSH server but don't start it immediately
 import { sshServer, SSH_CONFIG } from './ssh/sshServer';
 
@@ -198,6 +202,13 @@ if (envConfig.NODE_ENV === 'development') {
 
 // Apply security middleware first
 app.use(securityMiddleware);
+
+// Apply performance monitoring
+app.use(performanceMiddleware);
+
+// Apply advanced rate limiting
+app.use(advancedRateLimiter);
+app.use(burstProtection);
 
 // API Authentication middleware with multiple access methods
 app.use((req, res, next) => {
@@ -418,6 +429,9 @@ app.use('/api', dataRoutes);
 
 // Enhanced services API routes
 app.use('/api', servicesRoutes);
+
+// Analytics and monitoring routes
+app.use('/api', analyticsRoutes);
 
 // === DEVELOPMENT MODE FIXES ===
 if (envConfig.NODE_ENV !== 'production') {

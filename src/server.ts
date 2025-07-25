@@ -459,13 +459,7 @@ app.use('/*', (req, res, next) => {
     return next();
   }
   
-  // Check if this looks like it should be an API route
-  if (req.path.startsWith('/v0/') || req.path.startsWith('/data/') || req.path.startsWith('/signup') || 
-      req.path.startsWith('/sections') || req.path.startsWith('/security') || req.path.startsWith('/prelaunch')) {
-    console.log(`🔄 Redirecting API-like request: ${req.path} to /api${req.path}`);
-    return res.redirect(308, `/api${req.path}`);
-  }
-  
+  // Don't redirect - let the routes handle it directly
   next();
 });
 

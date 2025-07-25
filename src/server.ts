@@ -452,27 +452,7 @@ if (envConfig.NODE_ENV === 'production') {
   });
 }
 
-// Catch-all for any other endpoints that might be coming without /api prefix
-app.use('/*', (req, res, next) => {
-  // Skip if it's already an API route or health check
-  if (req.path.startsWith('/api/') || req.path === '/health' || req.path === '/') {
-    return next();
-  }
-  
-  // Let /v0/ routes pass through without redirect
-  if (req.path.startsWith('/v0/')) {
-    return next();
-  }
-  
-  // Check if this looks like it should be an API route
-  if (req.path.startsWith('/data/') || req.path.startsWith('/signup') || 
-      req.path.startsWith('/sections') || req.path.startsWith('/security') || req.path.startsWith('/prelaunch')) {
-    console.log(`🔄 Redirecting API-like request: ${req.path} to /api${req.path}`);
-    return res.redirect(308, `/api${req.path}`);
-  }
-  
-  next();
-});
+
 
 // Root endpoint - API info only
 app.get('/', (req, res) => {
@@ -553,6 +533,28 @@ app.get('/health/detailed', (req, res) => {
 
 
 
+
+// Catch-all for any other endpoints that might be coming without /api prefix
+app.use('/*', (req, res, next) => {
+  // Skip if it's already an API route or health check
+  if (req.path.startsWith('/api/') || req.path === '/health' || req.path === '/') {
+    return next();
+  }
+  
+  // Let /v0/ routes pass through without redirect
+  if (req.path.startsWith('/v0/')) {
+    return next();
+  }
+  
+  // Check if this looks like it should be an API route
+  if (req.path.startsWith('/data/') || req.path.startsWith('/signup') || 
+      req.path.startsWith('/sections') || req.path.startsWith('/security') || req.path.startsWith('/prelaunch')) {
+    console.log(`🔄 Redirecting API-like request: ${req.path} to /api${req.path}`);
+    return res.redirect(308, `/api${req.path}`);
+  }
+  
+  next();
+});
 
 // Return 403 Forbidden for non-API requests (except root)
 app.get('*', (req, res) => {

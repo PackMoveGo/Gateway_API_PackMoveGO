@@ -17,6 +17,6 @@
       "@util/*": ["util/*"]
     }
   },
-  "include": ["src/server.ts", "src/route/**/*", "src/controller/**/*", "src/service/**/*", "src/model/**/*", "src/util/**/*", "config/**/*"],
+  "include": ["src/server.ts", "src/route/**/*", "src/controller/**/*", "src/service/**/*", "src/model/**/*", "src/util/**/*", "src/config/**/*"],
   "exclude": ["node_modules", "dist", "src/components", "src/staticpage", "src/App.tsx"]
 } 

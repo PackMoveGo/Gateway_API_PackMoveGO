@@ -171,6 +171,19 @@ app.get('/mobile/health', (req, res) => {
   
   console.log(`📱 MOBILE HEALTH: Request from ${clientIp} - ${userAgent.substring(0, 50)}`);
   
+  // Set CORS headers for mobile
+  const origin = req.headers.origin || req.headers['origin'] || '';
+  if (origin && origin !== 'null') {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  } else {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+  }
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization,x-api-key,X-Requested-With');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS,HEAD');
+  res.setHeader('Access-Control-Max-Age', '86400');
+  res.setHeader('Vary', 'Origin');
+  
   res.status(200).json({
     status: 'ok',
     mobile: true,
@@ -183,7 +196,7 @@ app.get('/mobile/health', (req, res) => {
 // === ENHANCED /v0/ ROUTES WITH MOBILE SUPPORT ===
 // These routes now have better mobile compatibility
 
-// Define v0DataFiles array
+// Define v0DataFiles array (moved to avoid duplication)
 const v0DataFiles = [
   'blog', 'about', 'nav', 'contact', 'referral', 'reviews', 'locations', 'supplies', 'services', 'testimonials'
 ];
@@ -824,10 +837,7 @@ app.get('/mobile/v0/:name', (req, res) => {
   res.setHeader('Access-Control-Max-Age', '86400');
   res.setHeader('Vary', 'Origin');
   
-  const v0DataFiles = [
-    'blog', 'about', 'nav', 'contact', 'referral', 'reviews', 'locations', 'supplies', 'services', 'testimonials'
-  ];
-  
+  // Using the global v0DataFiles array defined above
   if (v0DataFiles.includes(name)) {
     try {
       const data = require(`./data/${name.charAt(0).toUpperCase() + name.slice(1)}.json`);
@@ -876,6 +886,12 @@ app.use('/*', (req, res, next) => {
   // Skip /v0/ routes completely - let them be handled by the specific route handlers
   if (req.path.startsWith('/v0/')) {
     console.log(`✅ /v0/ route detected: ${req.path} - allowing to pass through`);
+    return next();
+  }
+  
+  // Skip mobile endpoints - allow them to pass through
+  if (req.path.startsWith('/mobile/')) {
+    console.log(`✅ Mobile route detected: ${req.path} - allowing to pass through`);
     return next();
   }
   
@@ -1092,20 +1108,5 @@ server = app.listen(port, () => {
 // Start SSH server only in development
 console.log(`🔧 Environment check: envConfig.NODE_ENV = "${envConfig.NODE_ENV}", process.env.NODE_ENV = "${process.env.NODE_ENV}"`);
 
-if (envConfig.NODE_ENV === 'development' || process.env.NODE_ENV === 'development') {
-  try {
-    sshServer.listen(SSH_CONFIG.PORT, SSH_CONFIG.HOST, () => {
-      logInfo(`🔐 SSH Server started on ${SSH_CONFIG.HOST}:${SSH_CONFIG.PORT}`);
-      logInfo(`📋 SSH Configuration:`);
-      logInfo(`   - Environment: ${envConfig.NODE_ENV}`);
-      logInfo(`   - Allowed IPs: ${envConfig.ALLOWED_IPS.join(', ')}`);
-      logInfo(`   - Max Connections: ${SSH_CONFIG.MAX_CONNECTIONS}`);
-      logInfo(`   - Session Timeout: ${SSH_CONFIG.SESSION_TIMEOUT} minutes`);
-      logInfo(`   - Render Mode: ${SSH_CONFIG.RENDER_ENV ? 'Enabled' : 'Disabled'}`);
-    });
-  } catch (error) {
-    logError('❌ Failed to start SSH server:', error);
-  }
-} else {
-  logInfo('🔐 SSH Server disabled in production (frontend on Vercel)');
-}
+// SSH Server disabled to avoid key file issues
+console.log('🔐 SSH Server disabled - key file missing');

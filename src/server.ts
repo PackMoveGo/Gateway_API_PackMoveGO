@@ -141,34 +141,31 @@ app.options(['/v0/:name', '/v0/:name/'], (req, res) => {
 
 app.get(['/v0/:name', '/v0/:name/'], (req, res, next) => {
   const { name } = req.params;
+  const userAgent = req.headers['user-agent'] || '';
+  const clientIp = req.ip || req.socket.remoteAddress || 'Unknown';
   
-  // Set CORS headers for /v0/ routes FIRST (before any response)
-  const origin = req.headers.origin || req.headers['origin'];
-  const referer = req.headers.referer || req.headers['referer'];
+  // MOBILE LOGGING
+  const isMobile = userAgent.includes('Mobile') || userAgent.includes('iPhone') || userAgent.includes('Android');
+  console.log(`📱 /v0/ REQUEST: ${req.method} ${req.path} from ${clientIp}`);
+  console.log(`   Mobile: ${isMobile ? 'Yes' : 'No'}`);
+  console.log(`   User-Agent: "${userAgent.substring(0, 80)}"`);
   
-  console.log(`🔧 /v0/ CORS CHECK: ${req.method} ${req.path} - Origin: "${origin}" - Referer: "${referer}"`);
-  
-  // ALWAYS set CORS headers for packmovego.com and Vercel requests
-  if (origin && (origin === 'https://www.packmovego.com' || origin === 'https://packmovego.com' || 
-                 origin.includes('packmovego.com') || origin.includes('vercel.app'))) {
-    console.log(`🔧 /v0/ CORS: Setting headers for origin: ${origin}`);
+  // UNIVERSAL CORS FOR MOBILE - ALWAYS SET HEADERS
+  const origin = req.headers.origin || req.headers['origin'] || '';
+  if (origin && origin !== 'null') {
     res.setHeader('Access-Control-Allow-Origin', origin);
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization,x-api-key');
-    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
-    res.setHeader('Vary', 'Origin');
-    console.log(`✅ /v0/ CORS headers set!`);
-  } else if (referer && (referer.includes('packmovego.com') || referer.includes('vercel.app'))) {
-    console.log(`🔧 /v0/ CORS: Setting headers for referer: ${referer}`);
-    res.setHeader('Access-Control-Allow-Origin', 'https://www.packmovego.com');
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization,x-api-key');
-    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
-    res.setHeader('Vary', 'Origin');
-    console.log(`✅ /v0/ CORS headers set via referer!`);
+    console.log(`✅ /v0/ CORS: Set origin header for ${origin}`);
   } else {
-    console.log(`❌ /v0/ CORS: No headers set. Origin: "${origin}", Referer: "${referer}"`);
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    console.log(`✅ /v0/ CORS: Set wildcard origin header`);
   }
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization,x-api-key,X-Requested-With');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS,HEAD');
+  res.setHeader('Access-Control-Max-Age', '86400');
+  res.setHeader('Vary', 'Origin');
+  
+  console.log(`✅ /v0/ CORS: Universal headers set for mobile`);
   
   if (v0DataFiles.includes(name)) {
     try {
@@ -671,6 +668,7 @@ if (envConfig.NODE_ENV === 'production') {
 app.get('/api', (req, res) => {
   const clientIp = req.ip || req.socket.remoteAddress || '';
   const origin = req.headers.origin;
+  const userAgent = req.headers['user-agent'] || '';
   
   // Check if this is a frontend request
   if (origin === 'https://www.packmovego.com' || origin === 'https://packmovego.com') {
@@ -681,6 +679,23 @@ app.get('/api', (req, res) => {
         health: '/api/health',
         data: '/api/v0/:name',
         content: '/api/v0/*'
+      }
+    });
+  }
+  
+  // Check if this is a mobile request
+  const isMobile = userAgent.includes('Mobile') || userAgent.includes('iPhone') || userAgent.includes('Android');
+  if (isMobile) {
+    console.log(`📱 MOBILE API ACCESS: ${userAgent.substring(0, 50)} from ${clientIp}`);
+    return res.json({
+      message: 'PackMoveGO Mobile API',
+      status: 'running',
+      mobile: true,
+      endpoints: {
+        nav: '/v0/nav',
+        services: '/v0/services',
+        testimonials: '/v0/testimonials',
+        heartbeat: '/api/heartbeat'
       }
     });
   }

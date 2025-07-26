@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phone API Debug Tool</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 15px;
+            background: #f5f5f5;
+            font-size: 14px;
+        }
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+        .test-button {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border: none;
+            border-radius: 6px;
+            background: #007AFF;
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .test-button:hover {
+            background: #0056CC;
+        }
+        .result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 11px;
+            white-space: pre-wrap;
+            word-break: break-all;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        .ip-display {
+            background: #e2e3e5;
+            padding: 10px;
+            border-radius: 6px;
+            margin: 10px 0;
+            font-family: monospace;
+        }
+        .status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status.success { background: #28a745; color: white; }
+        .status.error { background: #dc3545; color: white; }
+        .status.warning { background: #ffc107; color: black; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📱 Phone API Debug Tool</h1>
+        
+        <div class="section">
+            <h3>🔍 Device Information</h3>
+            <div id="device-info" class="result info"></div>
+        </div>
+
+        <div class="section">
+            <h3>🌐 Network Information</h3>
+            <div id="network-info" class="result info"></div>
+        </div>
+
+        <div class="section">
+            <h3>🔗 API Connection Tests</h3>
+            <p><strong>Your computer's IP addresses:</strong></p>
+            <div class="ip-display">
+                WiFi IP: <span id="wifi-ip">Loading...</span><br>
+                Local IP: <span id="local-ip">Loading...</span>
+            </div>
+            
+            <button class="test-button" onclick="testLocalhost()">Test localhost:3001</button>
+            <button class="test-button" onclick="testWifiIP()">Test WiFi IP (100.69.38.2:3001)</button>
+            <button class="test-button" onclick="testLocalIP()">Test Local IP (10.1.12.50:3001)</button>
+            <button class="test-button" onclick="testAllIPs()">Test All IP Addresses</button>
+            
+            <div id="connection-results"></div>
+        </div>
+
+        <div class="section">
+            <h3>📊 API Endpoint Tests</h3>
+            <button class="test-button" onclick="testEndpoint('/health')">Test /health</button>
+            <button class="test-button" onclick="testEndpoint('/mobile-test')">Test /mobile-test</button>
+            <button class="test-button" onclick="testEndpoint('/v0/blog')">Test /v0/blog</button>
+            <button class="test-button" onclick="testEndpoint('/v0/services')">Test /v0/services</button>
+            
+            <div id="endpoint-results"></div>
+        </div>
+
+        <div class="section">
+            <h3>🔧 Troubleshooting</h3>
+            <div id="troubleshooting" class="result info">
+                <strong>Common Issues:</strong>
+                • Make sure your phone is on the same WiFi network
+                • Try different browsers (Safari, Chrome, Firefox)
+                • Check if your computer's firewall is blocking port 3001
+                • Try turning off mobile data temporarily
+                • Some networks block device-to-device communication
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Display device information
+        function showDeviceInfo() {
+            const info = {
+                userAgent: navigator.userAgent,
+                platform: navigator.platform,
+                language: navigator.language,
+                cookieEnabled: navigator.cookieEnabled,
+                onLine: navigator.onLine,
+                screenWidth: screen.width,
+                screenHeight: screen.height,
+                windowWidth: window.innerWidth,
+                windowHeight: window.innerHeight,
+                isMobile: /Mobile|iPhone|Android|iPad/.test(navigator.userAgent),
+                connection: navigator.connection ? {
+                    effectiveType: navigator.connection.effectiveType,
+                    downlink: navigator.connection.downlink,
+                    rtt: navigator.connection.rtt
+                } : 'Not available'
+            };
+            
+            document.getElementById('device-info').textContent = JSON.stringify(info, null, 2);
+        }
+
+        // Get IP addresses
+        async function getIPAddresses() {
+            try {
+                const response = await fetch('https://api.ipify.org?format=json');
+                const data = await response.json();
+                document.getElementById('wifi-ip').textContent = data.ip;
+            } catch (error) {
+                document.getElementById('wifi-ip').textContent = 'Could not detect';
+            }
+            
+            document.getElementById('local-ip').textContent = '10.1.12.50 (from ifconfig)';
+        }
+
+        // Test connection to different IPs
+        async function testConnection(url, name) {
+            const resultsDiv = document.getElementById('connection-results');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = 'result loading';
+            resultDiv.innerHTML = `<span class="status warning">Testing...</span> ${name}: ${url}`;
+            resultsDiv.appendChild(resultDiv);
+
+            try {
+                const startTime = Date.now();
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const responseTime = Date.now() - startTime;
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `<span class="status success">SUCCESS</span> ${name}: ${url}<br>Response time: ${responseTime}ms<br>Status: ${response.status}<br>Data: ${JSON.stringify(data, null, 2)}`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = `<span class="status error">ERROR</span> ${name}: ${url}<br>Status: ${response.status}<br>Error: ${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `<span class="status error">FAILED</span> ${name}: ${url}<br>Error: ${error.message}<br><br>This usually means:<br>• Your phone is not on the same WiFi network<br>• Your computer's firewall is blocking the connection<br>• The server is not running<br>• Network restrictions are preventing device-to-device communication`;
+            }
+        }
+
+        // Test functions
+        function testLocalhost() {
+            testConnection('http://localhost:3001/health', 'localhost');
+        }
+
+        function testWifiIP() {
+            testConnection('http://100.69.38.2:3001/health', 'WiFi IP');
+        }
+
+        function testLocalIP() {
+            testConnection('http://10.1.12.50:3001/health', 'Local IP');
+        }
+
+        function testAllIPs() {
+            testLocalhost();
+            setTimeout(() => testWifiIP(), 1000);
+            setTimeout(() => testLocalIP(), 2000);
+        }
+
+        async function testEndpoint(endpoint) {
+            const resultsDiv = document.getElementById('endpoint-results');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = 'result loading';
+            resultDiv.innerHTML = `<span class="status warning">Testing...</span> ${endpoint}`;
+            resultsDiv.appendChild(resultDiv);
+
+            // Try multiple IPs
+            const ips = ['localhost', '100.69.38.2', '10.1.12.50'];
+            let success = false;
+
+            for (const ip of ips) {
+                try {
+                    const url = `http://${ip}:3001${endpoint}`;
+                    const response = await fetch(url, {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        resultDiv.className = 'result success';
+                        resultDiv.innerHTML = `<span class="status success">SUCCESS</span> ${endpoint}<br>Working IP: ${ip}<br>Status: ${response.status}<br>Data: ${JSON.stringify(data, null, 2)}`;
+                        success = true;
+                        break;
+                    }
+                } catch (error) {
+                    // Continue to next IP
+                }
+            }
+
+            if (!success) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `<span class="status error">FAILED</span> ${endpoint}<br>All IPs failed. Check:<br>• Server is running<br>• Phone is on same WiFi<br>• Firewall settings<br>• Network restrictions`;
+            }
+        }
+
+        // Initialize
+        showDeviceInfo();
+        getIPAddresses();
+    </script>
+</body>
+</html> 

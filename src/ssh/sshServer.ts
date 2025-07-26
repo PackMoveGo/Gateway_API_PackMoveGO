@@ -62,18 +62,28 @@ function cleanupExpiredSessions() {
 // Run cleanup every minute
 setInterval(cleanupExpiredSessions, 60000);
 
+// Function to get SSH host key
+function getSSHHostKey(): Buffer {
+  // First try environment variable
+  if (process.env.SSH_HOST_KEY) {
+    return Buffer.from(process.env.SSH_HOST_KEY);
+  }
+  
+  // Then try key file
+  const keyPath = process.env.SSH_HOST_KEY_PATH || './src/test/test_ssh_key';
+  try {
+    return require('fs').readFileSync(keyPath);
+  } catch (error) {
+    console.log('⚠️ SSH key file not found, using default key');
+    // Generate a simple key for development
+    return Buffer.from('ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC7eNtGpNGwstc....');
+  }
+}
+
 // Create SSH server
 const sshServer = new Server({
   hostKeys: [{
-    key: process.env.SSH_HOST_KEY || (() => {
-      try {
-        return require('fs').readFileSync('./src/test/test_ssh_key');
-      } catch (error) {
-        console.log('⚠️ SSH key file not found, using default key');
-        // Generate a simple key for development
-        return Buffer.from('ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC7eNtGpNGwstc....');
-      }
-    })(),
+    key: getSSHHostKey(),
     passphrase: process.env.SSH_HOST_KEY_PASSPHRASE || ''
   }]
 }, (client) => {
@@ -293,6 +303,21 @@ const tcpServer = createServer((socket) => {
 
 // Function to start SSH server
 function startSSHServer() {
+  // Check if SSH should be enabled
+  if (process.env.NODE_ENV === 'production' && !process.env.ENABLE_SSH) {
+    console.log('🔐 SSH Server disabled in production (ENABLE_SSH not set)');
+    return;
+  }
+
+  // Check if key file exists
+  const keyPath = process.env.SSH_HOST_KEY_PATH || './src/test/test_ssh_key';
+  try {
+    require('fs').accessSync(keyPath);
+  } catch (error) {
+    console.log('🔐 SSH Server disabled - key file missing');
+    return;
+  }
+
   tcpServer.listen(SSH_CONFIG.PORT, SSH_CONFIG.HOST, () => {
     console.log(`🔐 SSH Server started on ${SSH_CONFIG.HOST}:${SSH_CONFIG.PORT}`);
     console.log(`📋 SSH Configuration:`);
@@ -310,13 +335,13 @@ function startSSHServer() {
   });
 }
 
-// Start SSH server after a delay to ensure main server is ready
-setTimeout(() => {
-  try {
-    startSSHServer();
-  } catch (error) {
-    console.error('❌ Failed to start SSH server:', error);
-  }
-}, 2000);
+// Don't start SSH server automatically - it will be started explicitly if needed
+// setTimeout(() => {
+//   try {
+//     startSSHServer();
+//   } catch (error) {
+//     console.error('❌ Failed to start SSH server:', error);
+//   }
+// }, 2000);
 
-export { sshServer, activeSessions, SSH_CONFIG }; 
+export { sshServer, activeSessions, SSH_CONFIG, startSSHServer }; 

@@ -28,10 +28,12 @@ export const connectDB = async (): Promise<void> => {
     // Configure mongoose options for better stability
     const mongooseOptions = {
       maxPoolSize: 10,
-      serverSelectionTimeoutMS: 5000,
+      serverSelectionTimeoutMS: 10000, // Increased timeout
       socketTimeoutMS: 45000,
       bufferCommands: false,
-      retryWrites: true
+      retryWrites: true,
+      retryReads: true
+      // Removed buffermaxentries as it's not supported in newer MongoDB versions
     };
 
     await mongoose.connect(mongoUri, mongooseOptions);
@@ -44,13 +46,15 @@ export const connectDB = async (): Promise<void> => {
       console.error('❌ MongoDB connection error:', err);
       isConnected = false;
       
-      // Attempt to reconnect if not in production
-      if (process.env.NODE_ENV !== 'production' && connectionRetries < MAX_RETRIES) {
-        connectionRetries++;
-        console.log(`🔄 Attempting to reconnect (${connectionRetries}/${MAX_RETRIES})...`);
-        setTimeout(() => {
-          connectDB().catch(console.error);
-        }, 5000);
+      // Don't attempt to reconnect in production to avoid infinite loops
+      if (process.env.NODE_ENV !== 'production') {
+        if (connectionRetries < MAX_RETRIES) {
+          connectionRetries++;
+          console.log(`🔄 Attempting to reconnect (${connectionRetries}/${MAX_RETRIES})...`);
+          setTimeout(() => {
+            connectDB().catch(console.error);
+          }, 5000);
+        }
       }
     });
 
@@ -77,12 +81,9 @@ export const connectDB = async (): Promise<void> => {
   } catch (error) {
     console.error('❌ Failed to connect to MongoDB:', error);
     
-    // Don't throw error in development, just log it
-    if (process.env.NODE_ENV === 'production') {
-      throw error;
-    } else {
-      console.log('⚠️ Continuing without database connection');
-    }
+    // Don't throw error, just log it and continue
+    console.log('⚠️ Continuing without database connection');
+    isConnected = false;
   }
 };
 

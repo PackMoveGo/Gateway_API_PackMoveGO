@@ -1,5 +1,26 @@
 import express from 'express';
-import { activeSessions, SSH_CONFIG } from '../ssh/sshServer';
+// Conditional SSH imports to avoid initialization issues
+let activeSessions: Map<string, any>;
+let SSH_CONFIG: any;
+
+try {
+  const sshModule = require('../ssh/sshServer');
+  activeSessions = sshModule.activeSessions;
+  SSH_CONFIG = sshModule.SSH_CONFIG;
+} catch (error) {
+  console.log('⚠️ SSH module not available');
+  activeSessions = new Map();
+  SSH_CONFIG = {
+    PORT: 2222,
+    HOST: '0.0.0.0',
+    MAX_CONNECTIONS: 5,
+    SESSION_TIMEOUT: 3600000,
+    ALLOWED_IPS: [],
+    FRONTEND_IP: '',
+    ADMIN_PASSWORD: ''
+  };
+}
+
 import { authMiddleware } from '../middleware/authMiddleware';
 
 const router = express.Router();

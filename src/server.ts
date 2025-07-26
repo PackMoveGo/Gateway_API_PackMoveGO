@@ -252,21 +252,34 @@ app.use((req, res, next) => {
 
 app.use(cors(corsOptions));
 
-// Fallback CORS middleware if main CORS didn't set headers
+// Global CORS middleware - sets headers for ALL packmovego.com requests
 app.use((req, res, next) => {
-  const origin = req.headers.origin;
+  const origin = req.headers.origin || req.headers['origin'];
+  const referer = req.headers.referer || req.headers['referer'];
   
-  // Check if CORS headers are already set
-  if (!res.getHeader('Access-Control-Allow-Origin') && origin) {
-    // Only set for packmovego.com origins
-    if (origin === 'https://www.packmovego.com' || origin === 'https://packmovego.com' || origin.includes('packmovego.com')) {
-      console.log(`🔧 FALLBACK CORS: Setting headers for ${origin}`);
-      res.header('Access-Control-Allow-Origin', origin);
-      res.header('Access-Control-Allow-Credentials', 'true');
-      res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization,x-api-key');
-      res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
-      res.header('Vary', 'Origin');
-    }
+  console.log(`🌐 GLOBAL CORS CHECK: ${req.method} ${req.path}`);
+  console.log(`   Origin: "${origin}" (type: ${typeof origin})`);
+  console.log(`   Referer: "${referer}"`);
+  
+  // Set CORS headers for all packmovego.com requests
+  if (origin && (origin === 'https://www.packmovego.com' || origin === 'https://packmovego.com' || origin.includes('packmovego.com'))) {
+    console.log(`🔧 GLOBAL CORS: Setting headers for origin: ${origin}`);
+    res.header('Access-Control-Allow-Origin', origin);
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization,x-api-key');
+    res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+    res.header('Vary', 'Origin');
+    console.log(`✅ GLOBAL CORS headers set!`);
+  } else if (referer && referer.includes('packmovego.com')) {
+    console.log(`🔧 GLOBAL CORS: Setting headers for referer: ${referer}`);
+    res.header('Access-Control-Allow-Origin', 'https://www.packmovego.com');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization,x-api-key');
+    res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+    res.header('Vary', 'Origin');
+    console.log(`✅ GLOBAL CORS headers set via referer!`);
+  } else {
+    console.log(`❌ GLOBAL CORS: No headers set. Origin: "${origin}", Referer: "${referer}"`);
   }
   
   next();

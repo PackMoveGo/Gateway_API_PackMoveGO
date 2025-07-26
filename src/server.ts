@@ -238,6 +238,7 @@ app.use(burstProtection);
 
 // IMPORTANT: Apply CORS first to ensure proper headers are added before authentication
 // Deployment trigger: 2025-07-26 00:02:00
+// FORCE DEPLOYMENT: 2025-07-26 00:20:30 - CORS FIX
 
 // Debug middleware to log headers
 app.use((req, res, next) => {

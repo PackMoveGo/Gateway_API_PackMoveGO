@@ -47,7 +47,7 @@ export const createValidationMiddleware = (config: ValidationConfig) => {
         return res.status(400).json({
           success: false,
           message: 'Validation failed',
-          errors: errors.array().map(error => ({
+          errors: errors.array().map((error: any) => ({
             field: error.path,
             message: error.msg,
             value: error.value

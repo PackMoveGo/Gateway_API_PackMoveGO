@@ -5,7 +5,7 @@ import path from 'path';
 dotenv.config({ path: path.join(__dirname, '../../config/.env') });
 
 // Set test environment
-process.env.NODE_ENV = 'test';
+(process.env as any).NODE_ENV = 'test';
 process.env.PORT = '3001';
 
 // Mock console methods to reduce noise in tests
@@ -31,7 +31,7 @@ afterAll(() => {
 jest.setTimeout(10000);
 
 // Mock environment variables for testing
-process.env.NODE_ENV = 'test';
+(process.env as any).NODE_ENV = 'test';
 process.env.PORT = '3001';
 process.env.ALLOWED_IPS = '127.0.0.1,::1';
 process.env.ADMIN_PASSWORD = 'test_password';

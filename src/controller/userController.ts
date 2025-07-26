@@ -52,4 +52,5 @@ export const signup = async (req: Request, res: Response) => {
       message: 'An error occurred during signup'
     });
     }
+    return; // Explicit return for TypeScript
 }; 

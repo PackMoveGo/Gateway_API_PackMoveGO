@@ -7,166 +7,180 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 20px;
-            background: #f0f0f0;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
         }
-        .test-button {
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .result {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .success { border-left: 4px solid #28a745; }
+        .error { border-left: 4px solid #dc3545; }
+        button {
             background: #007bff;
             color: white;
             border: none;
-            padding: 15px 30px;
-            margin: 10px;
-            border-radius: 5px;
-            font-size: 16px;
+            padding: 10px 20px;
+            border-radius: 4px;
             cursor: pointer;
+            margin: 5px;
         }
-        .result {
-            background: white;
-            padding: 15px;
-            margin: 10px 0;
-            border-radius: 5px;
-            border-left: 4px solid #007bff;
-        }
-        .success {
-            border-left-color: #28a745;
-            background: #d4edda;
-        }
-        .error {
-            border-left-color: #dc3545;
-            background: #f8d7da;
-        }
-        .loading {
-            border-left-color: #ffc107;
-            background: #fff3cd;
+        button:hover {
+            background: #0056b3;
         }
     </style>
 </head>
 <body>
     <h1>📱 Mobile API Test</h1>
-    <p>Test your phone's connection to the API:</p>
-    
-    <button class="test-button" onclick="testAPI()">Test API Connection</button>
-    <button class="test-button" onclick="testNav()">Test Navigation Data</button>
-    <button class="test-button" onclick="testServices()">Test Services Data</button>
-    <button class="test-button" onclick="testHeartbeat()">Test Heartbeat</button>
-    
-    <div id="results"></div>
+    <p>This page helps debug why your API works on laptop but not on phone.</p>
+
+    <div class="test-section">
+        <h2>🔍 Device Information</h2>
+        <div id="device-info" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>🌐 API Tests</h2>
+        <button onclick="testHealth()">Test Health Endpoint</button>
+        <button onclick="testNav()">Test Navigation Data</button>
+        <button onclick="testMobileTest()">Test Mobile Endpoint</button>
+        <button onclick="testMobileNav()">Test Mobile Nav</button>
+        <div id="api-results" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>🔧 CORS Tests</h2>
+        <button onclick="testCORS()">Test CORS Headers</button>
+        <div id="cors-results" class="result"></div>
+    </div>
 
     <script>
-        const API_BASE = 'https://api.packmovego.com';
-        
-        function showResult(title, data, isSuccess = true) {
-            const resultsDiv = document.getElementById('results');
-            const resultDiv = document.createElement('div');
-            resultDiv.className = `result ${isSuccess ? 'success' : 'error'}`;
+        // Display device information
+        function showDeviceInfo() {
+            const info = {
+                userAgent: navigator.userAgent,
+                platform: navigator.platform,
+                language: navigator.language,
+                cookieEnabled: navigator.cookieEnabled,
+                onLine: navigator.onLine,
+                screenWidth: screen.width,
+                screenHeight: screen.height,
+                windowWidth: window.innerWidth,
+                windowHeight: window.innerHeight,
+                isMobile: /Mobile|iPhone|Android|iPad/.test(navigator.userAgent)
+            };
             
-            const timestamp = new Date().toLocaleTimeString();
-            resultDiv.innerHTML = `
-                <h3>${title}</h3>
-                <p><strong>Time:</strong> ${timestamp}</p>
-                <p><strong>Status:</strong> ${isSuccess ? '✅ Success' : '❌ Failed'}</p>
-                <pre>${JSON.stringify(data, null, 2)}</pre>
-            `;
-            
-            resultsDiv.appendChild(resultDiv);
+            document.getElementById('device-info').textContent = JSON.stringify(info, null, 2);
         }
 
-        async function testAPI() {
+        // Test API endpoints
+        async function testHealth() {
             try {
-                showResult('API Test', { status: 'Testing...' }, true);
-                
-                const response = await fetch(`${API_BASE}/api`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    showResult('API Connection', data, true);
-                } else {
-                    showResult('API Connection', { error: `HTTP ${response.status}`, statusText: response.statusText }, false);
-                }
+                const response = await fetch('https://api.packmovego.com/api/health');
+                const data = await response.json();
+                const result = {
+                    status: response.status,
+                    headers: Object.fromEntries(response.headers.entries()),
+                    data: data
+                };
+                document.getElementById('api-results').textContent = JSON.stringify(result, null, 2);
+                document.getElementById('api-results').className = 'result success';
             } catch (error) {
-                showResult('API Connection', { error: error.message }, false);
+                document.getElementById('api-results').textContent = `Error: ${error.message}`;
+                document.getElementById('api-results').className = 'result error';
             }
         }
 
         async function testNav() {
             try {
-                showResult('Navigation Test', { status: 'Testing...' }, true);
-                
-                const response = await fetch(`${API_BASE}/v0/nav`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    showResult('Navigation Data', data, true);
-                } else {
-                    showResult('Navigation Data', { error: `HTTP ${response.status}`, statusText: response.statusText }, false);
-                }
+                const response = await fetch('https://api.packmovego.com/v0/nav');
+                const data = await response.json();
+                const result = {
+                    status: response.status,
+                    headers: Object.fromEntries(response.headers.entries()),
+                    data: data
+                };
+                document.getElementById('api-results').textContent = JSON.stringify(result, null, 2);
+                document.getElementById('api-results').className = 'result success';
             } catch (error) {
-                showResult('Navigation Data', { error: error.message }, false);
+                document.getElementById('api-results').textContent = `Error: ${error.message}`;
+                document.getElementById('api-results').className = 'result error';
             }
         }
 
-        async function testServices() {
+        async function testMobileTest() {
             try {
-                showResult('Services Test', { status: 'Testing...' }, true);
-                
-                const response = await fetch(`${API_BASE}/v0/services`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    showResult('Services Data', { count: data.services?.length || 0, sample: data.services?.[0] || 'No data' }, true);
-                } else {
-                    showResult('Services Data', { error: `HTTP ${response.status}`, statusText: response.statusText }, false);
-                }
+                const response = await fetch('https://api.packmovego.com/api/mobile-test');
+                const data = await response.json();
+                const result = {
+                    status: response.status,
+                    headers: Object.fromEntries(response.headers.entries()),
+                    data: data
+                };
+                document.getElementById('api-results').textContent = JSON.stringify(result, null, 2);
+                document.getElementById('api-results').className = 'result success';
             } catch (error) {
-                showResult('Services Data', { error: error.message }, false);
+                document.getElementById('api-results').textContent = `Error: ${error.message}`;
+                document.getElementById('api-results').className = 'result error';
             }
         }
 
-        async function testHeartbeat() {
+        async function testMobileNav() {
             try {
-                showResult('Heartbeat Test', { status: 'Testing...' }, true);
-                
-                const response = await fetch(`${API_BASE}/api/heartbeat`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    showResult('Heartbeat', data, true);
-                } else {
-                    showResult('Heartbeat', { error: `HTTP ${response.status}`, statusText: response.statusText }, false);
-                }
+                const response = await fetch('https://api.packmovego.com/mobile/v0/nav');
+                const data = await response.json();
+                const result = {
+                    status: response.status,
+                    headers: Object.fromEntries(response.headers.entries()),
+                    data: data
+                };
+                document.getElementById('api-results').textContent = JSON.stringify(result, null, 2);
+                document.getElementById('api-results').className = 'result success';
             } catch (error) {
-                showResult('Heartbeat', { error: error.message }, false);
+                document.getElementById('api-results').textContent = `Error: ${error.message}`;
+                document.getElementById('api-results').className = 'result error';
             }
         }
 
-        // Auto-test on page load
-        window.onload = function() {
-            showResult('Page Loaded', { 
-                userAgent: navigator.userAgent,
-                timestamp: new Date().toISOString(),
-                message: 'Ready to test API connectivity'
-            }, true);
-        };
+        async function testCORS() {
+            try {
+                const response = await fetch('https://api.packmovego.com/api/health', {
+                    method: 'OPTIONS',
+                    headers: {
+                        'Origin': 'https://www.packmovego.com',
+                        'Access-Control-Request-Method': 'GET',
+                        'Access-Control-Request-Headers': 'Content-Type'
+                    }
+                });
+                
+                const result = {
+                    status: response.status,
+                    headers: Object.fromEntries(response.headers.entries())
+                };
+                document.getElementById('cors-results').textContent = JSON.stringify(result, null, 2);
+                document.getElementById('cors-results').className = 'result success';
+            } catch (error) {
+                document.getElementById('cors-results').textContent = `Error: ${error.message}`;
+                document.getElementById('cors-results').className = 'result error';
+            }
+        }
+
+        // Initialize
+        showDeviceInfo();
     </script>
 </body>
 </html> 

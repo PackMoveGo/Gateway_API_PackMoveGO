@@ -183,6 +183,12 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
     return next();
   }
   
+  // Always allow mobile test endpoint
+  if (requestPath === '/api/mobile-test') {
+    console.log(`✅ Mobile test endpoint allowed from ${clientIp}`);
+    return next();
+  }
+  
   // Always allow frontend requests (by domain or referer)
   if (isFrontendRequest(req)) {
     console.log(`✅ Frontend request allowed from ${req.headers.origin || clientIp}`);

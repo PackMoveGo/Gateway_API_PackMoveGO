@@ -70,4 +70,5 @@ export const getDataFile = (req: Request, res: Response) => {
       return res.status(200).type('text/plain').send(data);
     }
   });
+  return; // Explicit return for TypeScript
 }; 

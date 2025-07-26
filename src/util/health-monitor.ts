@@ -145,7 +145,12 @@ class HealthMonitor {
   // Core endpoints check
   private checkCoreEndpoints = async (): Promise<Partial<HealthCheck>> => {
     const endpoints = ['/v0/services', '/v0/testimonials', '/v0/blog'];
-    const results = [];
+    const results: Array<{
+      endpoint: string;
+      status: 'healthy' | 'unhealthy';
+      responseTime?: string;
+      error?: string;
+    }> = [];
     
     for (const endpoint of endpoints) {
       try {

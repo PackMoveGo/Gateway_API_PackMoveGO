@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import path from 'path';
 import fs from 'fs';
+import { sendSuccess, sendPaginated, sendNotFound, sendError } from '../util/response-formatter';
+import { NotFoundError } from '../middleware/error-handler';
 
 interface Service {
   id: string;
@@ -238,24 +240,15 @@ export const getServices = (req: Request, res: Response) => {
     const priceRanges = ['0-500', '500-1000', '1000+'];
     const durations = ['1-3 hours', '3-6 hours', '6+ hours'];
 
-    res.status(200).json({
-      success: true,
-      data: {
-        services: paginatedServices,
-        pagination: {
-          page: pageNum,
-          limit: limitNum,
-          total: filteredServices.length,
-          pages: Math.ceil(filteredServices.length / limitNum)
-        },
-        filters: {
-          categories,
-          priceRanges,
-          durations
-        }
-      },
-      timestamp: new Date().toISOString()
-    });
+    sendPaginated(
+      res,
+      paginatedServices,
+      pageNum,
+      limitNum,
+      filteredServices.length,
+      'Services retrieved successfully',
+      req.headers['x-request-id'] as string
+    );
   } catch (error) {
     res.status(500).json({
       success: false,
@@ -275,17 +268,11 @@ export const getServiceById = (req: Request, res: Response) => {
     const service = servicesData.services.find(s => s.id === serviceId);
     
     if (!service) {
-      return res.status(404).json({
-        success: false,
-        message: 'Service not found',
-        timestamp: new Date().toISOString()
-      });
+      return sendNotFound(res, 'Service', req.headers['x-request-id'] as string);
     }
 
-    res.status(200).json({
-      success: true,
-      data: service,
-      timestamp: new Date().toISOString()
+    sendSuccess(res, service, 'Service retrieved successfully', 200, {
+      requestId: req.headers['x-request-id'] as string
     });
   } catch (error) {
     res.status(500).json({
@@ -361,7 +348,12 @@ export const generateQuote = (req: Request, res: Response) => {
     const totalPrice = basePrice + distanceCost + seasonalCost + urgencyCost + addonsTotal;
 
     // Generate recommendations
-    const recommendations = [];
+    const recommendations: Array<{
+      serviceId: string;
+      title: string;
+      reason: string;
+      price: number;
+    }> = [];
     if (quoteRequest.rooms && quoteRequest.rooms > 2) {
       recommendations.push({
         serviceId: 'packing-service',
@@ -381,7 +373,7 @@ export const generateQuote = (req: Request, res: Response) => {
     }
 
     // Generate available time slots (simplified)
-    const availableSlots = [];
+    const availableSlots: string[] = [];
     const moveDate = new Date(quoteRequest.moveDate);
     for (let i = 8; i <= 16; i += 2) {
       const slot = new Date(moveDate);
@@ -424,6 +416,7 @@ export const generateQuote = (req: Request, res: Response) => {
       timestamp: new Date().toISOString()
     });
   }
+  return; // Explicit return for TypeScript
 };
 
 // Service analytics and performance
@@ -487,4 +480,5 @@ export const getServiceAnalytics = (req: Request, res: Response) => {
       timestamp: new Date().toISOString()
     });
   }
+  return; // Explicit return for TypeScript
 }; 

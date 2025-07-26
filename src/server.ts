@@ -322,6 +322,17 @@ app.use((req, res, next) => {
   
   if (isIpWhitelisted) {
     console.log(`✅ IP whitelisted request allowed: ${req.method} ${req.path} from ${clientIp}`);
+    
+    // CRITICAL: Set CORS headers for whitelisted IPs if they have packmovego.com origin
+    if (origin && (origin === 'https://www.packmovego.com' || origin === 'https://packmovego.com' || origin.includes('packmovego.com'))) {
+      console.log(`🔧 IP WHITELIST CORS: Setting headers for ${origin}`);
+      res.header('Access-Control-Allow-Origin', origin);
+      res.header('Access-Control-Allow-Credentials', 'true');
+      res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization,x-api-key');
+      res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+      res.header('Vary', 'Origin');
+    }
+    
     return next();
   }
   
@@ -329,6 +340,17 @@ app.use((req, res, next) => {
   if (origin === 'https://www.packmovego.com' || origin === 'https://packmovego.com' ||
       (referer && (referer.includes('packmovego.com')))) {
     console.log(`✅ Frontend domain request allowed: ${req.method} ${req.path} from ${origin || referer}`);
+    
+    // Set CORS headers for domain-based requests
+    if (origin) {
+      console.log(`🔧 DOMAIN AUTH CORS: Setting headers for ${origin}`);
+      res.header('Access-Control-Allow-Origin', origin);
+      res.header('Access-Control-Allow-Credentials', 'true');
+      res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization,x-api-key');
+      res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+      res.header('Vary', 'Origin');
+    }
+    
     return next();
   }
   

@@ -168,6 +168,11 @@ app.get('/mobile-debug.html', (req, res) => {
   res.sendFile(path.join(__dirname, '../mobile-debug.html'));
 });
 
+// Serve phone debug page
+app.get('/phone-debug.html', (req, res) => {
+  res.sendFile(path.join(__dirname, '../phone-debug.html'));
+});
+
 // === MOBILE-SPECIFIC ENDPOINTS ===
 // These endpoints are designed specifically for mobile devices
 // IMPORTANT: These must be defined BEFORE the catch-all middleware

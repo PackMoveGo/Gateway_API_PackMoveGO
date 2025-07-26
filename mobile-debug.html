@@ -3,334 +3,544 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>📱 Mobile API Debug Tool</title>
+    <title>📱 Phone API Debug Tool - PackMoveGo</title>
     <style>
         * {
+            margin: 0;
+            padding: 0;
             box-sizing: border-box;
         }
         
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            margin: 0;
-            padding: 10px;
-            background: #f8f9fa;
-            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
         }
         
         .container {
-            max-width: 100%;
+            max-width: 800px;
             margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
         }
         
         .header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 20px;
-            border-radius: 12px;
-            margin-bottom: 20px;
+            padding: 30px;
             text-align: center;
         }
         
         .header h1 {
-            margin: 0;
             font-size: 24px;
+            margin-bottom: 10px;
         }
         
-        .status-card {
-            background: white;
-            border-radius: 12px;
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+            background: #f8f9fa;
+            border-radius: 15px;
             padding: 20px;
-            margin-bottom: 15px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
         
-        .status-card h3 {
-            margin: 0 0 15px 0;
+        .section h2 {
             color: #333;
+            margin-bottom: 15px;
             font-size: 18px;
-        }
-        
-        .ip-display {
-            background: #e9ecef;
-            padding: 15px;
-            border-radius: 8px;
-            font-family: monospace;
-            font-size: 14px;
-            margin: 10px 0;
-        }
-        
-        .test-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
+            display: flex;
+            align-items: center;
             gap: 10px;
-            margin: 20px 0;
         }
         
-        .test-button {
-            padding: 12px;
-            border: none;
-            border-radius: 8px;
-            background: #007AFF;
-            color: white;
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .info-item {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .info-item strong {
+            color: #495057;
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .info-item span {
+            color: #6c757d;
             font-size: 14px;
-            font-weight: 600;
+        }
+        
+        .test-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .test-btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
             cursor: pointer;
-            transition: all 0.2s;
+            font-size: 14px;
+            transition: all 0.3s ease;
         }
         
-        .test-button:hover {
-            background: #0056CC;
-            transform: translateY(-1px);
+        .test-btn:hover {
+            background: #0056b3;
+            transform: translateY(-2px);
         }
         
-        .test-button:active {
-            background: #004499;
-            transform: translateY(0);
-        }
-        
-        .test-button.success {
+        .test-btn.success {
             background: #28a745;
         }
         
-        .test-button.error {
+        .test-btn.failed {
             background: #dc3545;
         }
         
-        .test-button.loading {
-            background: #6c757d;
-            opacity: 0.7;
+        .test-btn.loading {
+            background: #ffc107;
+            color: #212529;
         }
         
-        .result {
-            margin: 15px 0;
+        .results {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .result-item {
+            margin-bottom: 15px;
             padding: 15px;
             border-radius: 8px;
-            font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
-            font-size: 12px;
-            white-space: pre-wrap;
-            word-break: break-all;
-            max-height: 200px;
-            overflow-y: auto;
+            border-left: 4px solid #dee2e6;
         }
         
-        .success {
+        .result-item.success {
             background: #d4edda;
-            border: 1px solid #c3e6cb;
-            color: #155724;
+            border-left-color: #28a745;
         }
         
-        .error {
+        .result-item.failed {
             background: #f8d7da;
-            border: 1px solid #f5c6cb;
-            color: #721c24;
+            border-left-color: #dc3545;
+        }
+        
+        .result-item.loading {
+            background: #fff3cd;
+            border-left-color: #ffc107;
+        }
+        
+        .result-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .result-details {
+            font-size: 12px;
+            color: #6c757d;
+            font-family: monospace;
+        }
+        
+        .troubleshooting {
+            background: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .troubleshooting h3 {
+            color: #0056b3;
+            margin-bottom: 15px;
+        }
+        
+        .troubleshooting ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        .troubleshooting li {
+            margin-bottom: 8px;
+            padding-left: 20px;
+            position: relative;
+        }
+        
+        .troubleshooting li:before {
+            content: "•";
+            color: #0056b3;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
         }
         
         .loading {
-            background: #d1ecf1;
-            border: 1px solid #bee5eb;
-            color: #0c5460;
-        }
-        
-        .info {
-            background: #e2e3e5;
-            border: 1px solid #d6d8db;
-            color: #383d41;
-        }
-        
-        .qr-section {
-            text-align: center;
-            margin: 20px 0;
-        }
-        
-        .qr-code {
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
             display: inline-block;
-            margin: 10px;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s linear infinite;
         }
         
-        .instructions {
-            background: #fff3cd;
-            border: 1px solid #ffeaa7;
-            color: #856404;
-            padding: 15px;
-            border-radius: 8px;
-            margin: 15px 0;
-        }
-        
-        .endpoint-list {
-            background: #f8f9fa;
-            border: 1px solid #dee2e6;
-            border-radius: 8px;
-            padding: 15px;
-            margin: 15px 0;
-        }
-        
-        .endpoint-item {
-            font-family: monospace;
-            font-size: 12px;
-            margin: 5px 0;
-            padding: 5px;
-            background: white;
-            border-radius: 4px;
-        }
-        
-        @media (max-width: 600px) {
-            .test-grid {
-                grid-template-columns: 1fr;
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
             }
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-indicator.online {
+            background: #28a745;
+        }
+        
+        .status-indicator.offline {
+            background: #dc3545;
+        }
+        
+        .status-indicator.checking {
+            background: #ffc107;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>📱 Mobile API Debug Tool</h1>
-            <p>Test your PackMoveGO API from any device</p>
+            <h1>📱 Phone API Debug Tool</h1>
+            <p>Test your mobile device's connection to the PackMoveGo API</p>
         </div>
         
-        <div class="status-card">
-            <h3>🌐 Network Information</h3>
-            <div class="ip-display">
-                <strong>Your Computer's IP:</strong> 10.1.12.50<br>
-                <strong>Server Port:</strong> 3001<br>
-                <strong>API Base URL:</strong> http://10.1.12.50:3001
+        <div class="content">
+            <!-- Device Information -->
+            <div class="section">
+                <h2>🔍 Device Information</h2>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <strong>User Agent</strong>
+                        <span id="userAgent"></span>
+                    </div>
+                    <div class="info-item">
+                        <strong>Platform</strong>
+                        <span id="platform"></span>
+                    </div>
+                    <div class="info-item">
+                        <strong>Language</strong>
+                        <span id="language"></span>
+                    </div>
+                    <div class="info-item">
+                        <strong>Cookie Enabled</strong>
+                        <span id="cookieEnabled"></span>
+                    </div>
+                    <div class="info-item">
+                        <strong>Online Status</strong>
+                        <span id="onLine"></span>
+                    </div>
+                    <div class="info-item">
+                        <strong>Screen Size</strong>
+                        <span id="screenSize"></span>
+                    </div>
+                    <div class="info-item">
+                        <strong>Window Size</strong>
+                        <span id="windowSize"></span>
+                    </div>
+                    <div class="info-item">
+                        <strong>Mobile Device</strong>
+                        <span id="isMobile"></span>
+                    </div>
+                    <div class="info-item">
+                        <strong>Connection</strong>
+                        <span id="connection"></span>
+                    </div>
+                </div>
             </div>
-            <div class="instructions">
-                <strong>📱 To test from your phone:</strong><br>
-                1. Make sure your phone is on the same WiFi network<br>
-                2. Open this page on your phone: <strong>http://10.1.12.50:3001/mobile-debug.html</strong><br>
-                3. Or scan the QR code below
+            
+            <!-- Network Information -->
+            <div class="section">
+                <h2>🌐 Network Information</h2>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <strong>WiFi IP</strong>
+                        <span id="wifiIP">100.69.38.2</span>
+                    </div>
+                    <div class="info-item">
+                        <strong>Local IP</strong>
+                        <span id="localIP">10.1.12.50</span>
+                    </div>
+                    <div class="info-item">
+                        <strong>Server Status</strong>
+                        <span id="serverStatus">Checking...</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- API Connection Tests -->
+            <div class="section">
+                <h2>🔗 API Connection Tests</h2>
+                <p style="margin-bottom: 15px; color: #6c757d;">
+                    Your computer's IP addresses:
+                </p>
+                <div class="test-buttons">
+                    <button class="test-btn" onclick="testConnection('localhost')">Test localhost:3001</button>
+                    <button class="test-btn" onclick="testConnection('wifi')">Test WiFi IP (100.69.38.2:3001)</button>
+                    <button class="test-btn" onclick="testConnection('local')">Test Local IP (10.1.12.50:3001)</button>
+                    <button class="test-btn" onclick="testAllConnections()">Test All IP Addresses</button>
+                </div>
+            </div>
+            
+            <!-- API Endpoint Tests -->
+            <div class="section">
+                <h2>📊 API Endpoint Tests</h2>
+                <div class="test-buttons">
+                    <button class="test-btn" onclick="testEndpoint('/health')">Test /health</button>
+                    <button class="test-btn" onclick="testEndpoint('/mobile-test')">Test /mobile-test</button>
+                    <button class="test-btn" onclick="testEndpoint('/v0/blog')">Test /v0/blog</button>
+                    <button class="test-btn" onclick="testEndpoint('/v0/services')">Test /v0/services</button>
+                </div>
+            </div>
+            
+            <!-- Results -->
+            <div class="results" id="results">
+                <h3>📊 Test Results</h3>
+                <p style="color: #6c757d; font-style: italic;">Run tests to see results here...</p>
+            </div>
+            
+            <!-- Troubleshooting -->
+            <div class="troubleshooting">
+                <h3>🔧 Troubleshooting</h3>
+                <p style="margin-bottom: 15px; color: #0056b3;">
+                    Common Issues:
+                </p>
+                <ul>
+                    <li>Make sure your phone is on the same WiFi network</li>
+                    <li>Try different browsers (Safari, Chrome, Firefox)</li>
+                    <li>Check if your computer's firewall is blocking port 3001</li>
+                    <li>Try turning off mobile data temporarily</li>
+                    <li>Some networks block device-to-device communication</li>
+                </ul>
             </div>
         </div>
-        
-        <div class="status-card">
-            <h3>🔗 Quick Test Buttons</h3>
-            <div class="test-grid">
-                <button class="test-button" onclick="testEndpoint('/health')">Health Check</button>
-                <button class="test-button" onclick="testEndpoint('/api/health')">API Health</button>
-                <button class="test-button" onclick="testEndpoint('/mobile/health')">Mobile Health</button>
-                <button class="test-button" onclick="testEndpoint('/api/v0/blog')">Blog Data</button>
-                <button class="test-button" onclick="testEndpoint('/api/v0/services')">Services</button>
-                <button class="test-button" onclick="testEndpoint('/api/v0/about')">About</button>
-                <button class="test-button" onclick="testEndpoint('/api/v0/contact')">Contact</button>
-                <button class="test-button" onclick="testEndpoint('/api/v0/locations')">Locations</button>
-            </div>
-        </div>
-        
-        <div class="status-card">
-            <h3>📋 Available Endpoints</h3>
-            <div class="endpoint-list">
-                <div class="endpoint-item">GET /health - Basic health check</div>
-                <div class="endpoint-item">GET /api/health - API health check</div>
-                <div class="endpoint-item">GET /mobile/health - Mobile-specific health</div>
-                <div class="endpoint-item">GET /api/v0/blog - Blog content</div>
-                <div class="endpoint-item">GET /api/v0/services - Services data</div>
-                <div class="endpoint-item">GET /api/v0/about - About page data</div>
-                <div class="endpoint-item">GET /api/v0/contact - Contact information</div>
-                <div class="endpoint-item">GET /api/v0/locations - Location data</div>
-                <div class="endpoint-item">GET /api/v0/reviews - Customer reviews</div>
-                <div class="endpoint-item">GET /api/v0/supplies - Supplies data</div>
-                <div class="endpoint-item">GET /api/v0/testimonials - Testimonials</div>
-                <div class="endpoint-item">GET /api/v0/nav - Navigation data</div>
-                <div class="endpoint-item">GET /api/v0/referral - Referral information</div>
-            </div>
-        </div>
-        
-        <div class="qr-section">
-            <h3>📱 Scan to Test on Phone</h3>
-            <div class="qr-code">
-                <div id="qrcode"></div>
-                <p style="margin: 10px 0 0 0; font-size: 12px;">http://10.1.12.50:3001/mobile-debug.html</p>
-            </div>
-        </div>
-        
-        <div id="results"></div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
     <script>
-        // Generate QR code
-        QRCode.toCanvas(document.getElementById('qrcode'), 'http://10.1.12.50:3001/mobile-debug.html', {
-            width: 200,
-            margin: 2
-        }, function (error) {
-            if (error) console.error(error);
-        });
+        // Device Information
+        document.getElementById('userAgent').textContent = navigator.userAgent;
+        document.getElementById('platform').textContent = navigator.platform;
+        document.getElementById('language').textContent = navigator.language;
+        document.getElementById('cookieEnabled').textContent = navigator.cookieEnabled ? 'Yes' : 'No';
+        document.getElementById('onLine').textContent = navigator.onLine ? 'Online' : 'Offline';
+        document.getElementById('screenSize').textContent = `${screen.width} × ${screen.height}`;
+        document.getElementById('windowSize').textContent = `${window.innerWidth} × ${window.innerHeight}`;
+        document.getElementById('isMobile').textContent = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ? 'Yes' : 'No';
+        document.getElementById('connection').textContent = navigator.connection ? navigator.connection.effectiveType || 'Not available' : 'Not available';
 
-        // Track button states
-        const buttonStates = {};
-
-        async function testEndpoint(endpoint) {
+        // Test connection to different IP addresses
+        async function testConnection(type) {
             const button = event.target;
-            const buttonId = endpoint;
+            const originalText = button.textContent;
             
-            // Update button state
-            button.classList.add('loading');
             button.textContent = 'Testing...';
-            buttonStates[buttonId] = 'loading';
+            button.className = 'test-btn loading';
             
-            const resultsDiv = document.getElementById('results');
-            const resultDiv = document.createElement('div');
-            resultDiv.className = 'result loading';
-            resultDiv.textContent = `🔄 Testing ${endpoint}...`;
-            resultsDiv.appendChild(resultDiv);
-
+            let url;
+            switch(type) {
+                case 'localhost':
+                    url = 'http://localhost:3001/health';
+                    break;
+                case 'wifi':
+                    url = 'http://100.69.38.2:3001/health';
+                    break;
+                case 'local':
+                    url = 'http://10.1.12.50:3001/health';
+                    break;
+            }
+            
             try {
-                const startTime = Date.now();
-                const response = await fetch(`http://10.1.12.50:3001${endpoint}`, {
+                const response = await fetch(url, {
                     method: 'GET',
+                    mode: 'cors',
                     headers: {
-                        'Accept': 'application/json',
                         'Content-Type': 'application/json'
                     }
                 });
-
-                const endTime = Date.now();
-                const responseTime = endTime - startTime;
-
-                const data = await response.json();
                 
                 if (response.ok) {
-                    resultDiv.className = 'result success';
-                    resultDiv.textContent = `✅ ${endpoint} - SUCCESS (${response.status})\n⏱️ Response Time: ${responseTime}ms\n\n${JSON.stringify(data, null, 2)}`;
-                    
-                    // Update button state
-                    button.classList.remove('loading');
-                    button.classList.add('success');
-                    button.textContent = '✅ Success';
-                    buttonStates[buttonId] = 'success';
+                    const data = await response.json();
+                    button.textContent = 'SUCCESS';
+                    button.className = 'test-btn success';
+                    addResult('success', `${type.toUpperCase()} IP`, `Status: ${response.status}`, data);
                 } else {
-                    resultDiv.className = 'result error';
-                    resultDiv.textContent = `❌ ${endpoint} - ERROR (${response.status})\n⏱️ Response Time: ${responseTime}ms\n\n${JSON.stringify(data, null, 2)}`;
-                    
-                    // Update button state
-                    button.classList.remove('loading');
-                    button.classList.add('error');
-                    button.textContent = '❌ Error';
-                    buttonStates[buttonId] = 'error';
+                    button.textContent = 'FAILED';
+                    button.className = 'test-btn failed';
+                    addResult('failed', `${type.toUpperCase()} IP`, `Status: ${response.status}`, 'Server error');
                 }
             } catch (error) {
-                resultDiv.className = 'result error';
-                resultDiv.textContent = `❌ ${endpoint} - CONNECTION FAILED\n\nError: ${error.message}\n\n🔧 Troubleshooting:\n1. Make sure your phone is on the same WiFi network\n2. Check if the server is running on port 3001\n3. Try accessing: http://10.1.12.50:3001${endpoint}`;
-                
-                // Update button state
-                button.classList.remove('loading');
-                button.classList.add('error');
-                button.textContent = '❌ Failed';
-                buttonStates[buttonId] = 'error';
+                button.textContent = 'FAILED';
+                button.className = 'test-btn failed';
+                addResult('failed', `${type.toUpperCase()} IP`, 'Error: Load failed', error.message);
             }
-            
-            // Scroll to result
-            resultDiv.scrollIntoView({ behavior: 'smooth' });
         }
 
-        // Auto-test on page load
-        window.addEventListener('load', function() {
-            setTimeout(() => {
-                testEndpoint('/health');
-            }, 1000);
+        // Test all connections
+        async function testAllConnections() {
+            const connections = [
+                { type: 'localhost', url: 'http://localhost:3001/health' },
+                { type: 'WiFi IP', url: 'http://100.69.38.2:3001/health' },
+                { type: 'Local IP', url: 'http://10.1.12.50:3001/health' }
+            ];
+            
+            for (const connection of connections) {
+                await testSpecificConnection(connection.type, connection.url);
+                await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second between tests
+            }
+        }
+
+        async function testSpecificConnection(type, url) {
+            try {
+                const response = await fetch(url, {
+                    method: 'GET',
+                    mode: 'cors',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    addResult('success', type, `Status: ${response.status}`, data);
+                } else {
+                    addResult('failed', type, `Status: ${response.status}`, 'Server error');
+                }
+            } catch (error) {
+                addResult('failed', type, 'Error: Load failed', error.message);
+            }
+        }
+
+        // Test API endpoints
+        async function testEndpoint(endpoint) {
+            const button = event.target;
+            const originalText = button.textContent;
+            
+            button.textContent = 'Testing...';
+            button.className = 'test-btn loading';
+            
+            const baseUrls = [
+                'http://localhost:3001',
+                'http://100.69.38.2:3001',
+                'http://10.1.12.50:3001'
+            ];
+            
+            for (const baseUrl of baseUrls) {
+                try {
+                    const response = await fetch(`${baseUrl}${endpoint}`, {
+                        method: 'GET',
+                        mode: 'cors',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        button.textContent = 'SUCCESS';
+                        button.className = 'test-btn success';
+                        addResult('success', endpoint, `Working IP: ${baseUrl.replace('http://', '')}`, data);
+                        return;
+                    }
+                } catch (error) {
+                    // Continue to next URL
+                }
+            }
+            
+            button.textContent = 'FAILED';
+            button.className = 'test-btn failed';
+            addResult('failed', endpoint, 'All IPs failed', 'No working connection found');
+        }
+
+        // Add result to the results section
+        function addResult(status, title, subtitle, data) {
+            const resultsDiv = document.getElementById('results');
+            const resultItem = document.createElement('div');
+            resultItem.className = `result-item ${status}`;
+            
+            const statusIndicator = document.createElement('span');
+            statusIndicator.className = `status-indicator ${status}`;
+            
+            const titleDiv = document.createElement('div');
+            titleDiv.className = 'result-title';
+            titleDiv.appendChild(statusIndicator);
+            titleDiv.appendChild(document.createTextNode(title));
+            
+            const detailsDiv = document.createElement('div');
+            detailsDiv.className = 'result-details';
+            detailsDiv.textContent = subtitle;
+            
+            if (data && typeof data === 'object') {
+                const dataDiv = document.createElement('div');
+                dataDiv.className = 'result-details';
+                dataDiv.style.marginTop = '10px';
+                dataDiv.textContent = JSON.stringify(data, null, 2);
+                resultItem.appendChild(dataDiv);
+            }
+            
+            resultItem.appendChild(titleDiv);
+            resultItem.appendChild(detailsDiv);
+            
+            // Remove the placeholder text if it exists
+            const placeholder = resultsDiv.querySelector('p');
+            if (placeholder && placeholder.textContent.includes('Run tests to see results')) {
+                placeholder.remove();
+            }
+            
+            resultsDiv.appendChild(resultItem);
+        }
+
+        // Check server status on load
+        window.addEventListener('load', async () => {
+            try {
+                const response = await fetch('http://localhost:3001/health');
+                if (response.ok) {
+                    document.getElementById('serverStatus').textContent = '✅ Online';
+                    document.getElementById('serverStatus').style.color = '#28a745';
+                } else {
+                    document.getElementById('serverStatus').textContent = '❌ Offline';
+                    document.getElementById('serverStatus').style.color = '#dc3545';
+                }
+            } catch (error) {
+                document.getElementById('serverStatus').textContent = '❌ Offline';
+                document.getElementById('serverStatus').style.color = '#dc3545';
+            }
         });
     </script>
 </body>

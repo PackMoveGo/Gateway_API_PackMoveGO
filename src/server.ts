@@ -413,12 +413,23 @@ app.get('/dashboard', (req, res) => {
 app.use((req, res, next) => {
   const requestOrigin = req.headers.origin || req.headers['origin'] || '';
   const referer = req.headers.referer || req.headers['referer'] || '';
+  const userAgent = req.headers['user-agent'] || '';
+  const clientIp = req.ip || req.socket.remoteAddress || 'Unknown';
+  
+  // KEEP-ALIVE LOGGING FOR RENDER
+  console.log(`🌐 KEEP-ALIVE: ${req.method} ${req.path} from ${clientIp}`);
+  console.log(`   Origin: "${requestOrigin || 'None'}"`);
+  console.log(`   Referer: "${referer || 'None'}"`);
+  console.log(`   User-Agent: "${userAgent.substring(0, 80) || 'None'}"`);
+  console.log(`   Timestamp: ${new Date().toISOString()}`);
   
   // Set CORS headers for ALL requests to keep backend alive
   if (requestOrigin) {
     res.setHeader('Access-Control-Allow-Origin', requestOrigin);
+    console.log(`✅ CORS: Set origin header for ${requestOrigin}`);
   } else {
     res.setHeader('Access-Control-Allow-Origin', '*');
+    console.log(`✅ CORS: Set wildcard origin header`);
   }
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization,x-api-key');
@@ -427,9 +438,15 @@ app.use((req, res, next) => {
   
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
+    console.log(`🔄 PREFLIGHT: Handling OPTIONS request for ${req.path}`);
     res.status(200).end();
     return;
   }
+  
+  // Log response completion
+  res.on('finish', () => {
+    console.log(`✅ RESPONSE: ${req.method} ${req.path} - Status: ${res.statusCode} - Completed at ${new Date().toISOString()}`);
+  });
   
   next();
 });
@@ -648,6 +665,37 @@ app.get('/health/detailed', (req, res) => {
   });
 });
 
+// KEEP-ALIVE HEARTBEAT ENDPOINT FOR FRONTEND
+app.get('/api/heartbeat', (req, res) => {
+  const clientIp = req.ip || req.socket.remoteAddress || 'Unknown';
+  const userAgent = req.headers['user-agent'] || 'Unknown';
+  
+  console.log(`💓 HEARTBEAT: Frontend keep-alive from ${clientIp}`);
+  console.log(`   User-Agent: "${userAgent.substring(0, 80)}"`);
+  console.log(`   Timestamp: ${new Date().toISOString()}`);
+  
+  res.status(200).json({
+    status: 'alive',
+    message: 'Backend is active and responding',
+    timestamp: new Date().toISOString(),
+    uptime: Math.floor(process.uptime()),
+    memory: process.memoryUsage(),
+    frontend: 'connected'
+  });
+});
+
+// FRONTEND KEEP-ALIVE PING
+app.get('/api/ping', (req, res) => {
+  const clientIp = req.ip || req.socket.remoteAddress || 'Unknown';
+  console.log(`🏓 PING: Frontend ping from ${clientIp} at ${new Date().toISOString()}`);
+  
+  res.status(200).json({
+    pong: true,
+    timestamp: new Date().toISOString(),
+    backend: 'active'
+  });
+});
+
 
 
 
@@ -836,6 +884,11 @@ server = app.listen(port, () => {
   console.log('📡 All endpoints served directly from this server');
   console.log('🔗 Ready to accept requests from any frontend');
   console.log('==================================================');
+  
+  // PERIODIC KEEP-ALIVE LOGGING FOR RENDER
+  setInterval(() => {
+    console.log(`💚 BACKEND ALIVE: Server running for ${Math.floor(process.uptime())}s - ${new Date().toISOString()}`);
+  }, 60000); // Log every minute
 });
 
 // Start SSH server only in development

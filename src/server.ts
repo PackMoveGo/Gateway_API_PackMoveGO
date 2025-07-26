@@ -374,18 +374,26 @@ app.use((req, res, next) => {
   console.log(`   IP: "${req.ip || req.socket.remoteAddress || 'Unknown'}"`);
   console.log(`   All Headers: ${JSON.stringify(Object.keys(req.headers))}`);
   
+  // Allow ALL mobile requests immediately
+  const userAgent = req.headers['user-agent'] || '';
+  if (userAgent.includes('Mobile') || userAgent.includes('iPhone') || userAgent.includes('Android') || 
+      userAgent.includes('Safari') || userAgent.includes('Chrome')) {
+    console.log(`✅ Mobile request allowed immediately: ${req.method} ${req.path}`);
+    return next();
+  }
+  
   // Always allow health checks and public data routes
   if (req.path === '/api/health' || req.path === '/health' || req.path === '/api/health/simple' ||
       req.path.startsWith('/v0/') || req.path.startsWith('/api/v0/') ||
       req.path.startsWith('/api/data/') || req.path.startsWith('/data/')) {
     console.log(`✅ Public route allowed: ${req.method} ${req.path}`);
     
-    // Set CORS headers for public routes
+    // Set CORS headers for ALL requests to public routes
     const origin = req.headers.origin || req.headers['origin'];
     const referer = req.headers.referer || req.headers['referer'];
     
-    if (origin && (origin === 'https://www.packmovego.com' || origin === 'https://packmovego.com' || 
-                   origin.includes('packmovego.com') || origin.includes('vercel.app'))) {
+    // Always set CORS headers for public routes, regardless of origin
+    if (origin) {
       console.log(`🔧 PUBLIC ROUTE CORS: Setting headers for origin: ${origin}`);
       res.setHeader('Access-Control-Allow-Origin', origin);
       res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -393,16 +401,11 @@ app.use((req, res, next) => {
       res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
       res.setHeader('Vary', 'Origin');
       console.log(`✅ PUBLIC ROUTE CORS headers set!`);
-    } else if (referer && (referer.includes('packmovego.com') || referer.includes('vercel.app'))) {
-      console.log(`🔧 PUBLIC ROUTE CORS: Setting headers for referer: ${referer}`);
-      res.setHeader('Access-Control-Allow-Origin', 'https://www.packmovego.com');
-      res.setHeader('Access-Control-Allow-Credentials', 'true');
+    } else {
+      console.log(`🔧 PUBLIC ROUTE CORS: No origin, setting default headers`);
+      res.setHeader('Access-Control-Allow-Origin', '*');
       res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization,x-api-key');
       res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
-      res.setHeader('Vary', 'Origin');
-      console.log(`✅ PUBLIC ROUTE CORS headers set via referer!`);
-    } else {
-      console.log(`❌ PUBLIC ROUTE CORS: No headers set. Origin: "${origin}", Referer: "${referer}"`);
     }
     
     return next();

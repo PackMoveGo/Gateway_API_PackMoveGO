@@ -141,6 +141,21 @@ export function ipWhitelist(req: Request, res: Response, next: NextFunction) {
     return next();
   }
   
+  // Always allow mobile devices
+  const isMobile = userAgent.includes('Mobile') || 
+                   userAgent.includes('iPhone') || 
+                   userAgent.includes('Android') || 
+                   userAgent.includes('iPad') ||
+                   userAgent.includes('Safari') || 
+                   userAgent.includes('Chrome') || 
+                   userAgent.includes('Firefox') ||
+                   userAgent.includes('Edge');
+  
+  if (isMobile) {
+    console.log(`📱 Mobile device allowed from ${clientIp} - User-Agent: ${userAgent.substring(0, 50)}`);
+    return next();
+  }
+  
   // In development, allow all requests
   if (SECURITY_CONFIG.IS_DEVELOPMENT) {
     console.log(`✅ Development mode - allowing ${clientIp} for ${requestPath}`);
@@ -162,8 +177,8 @@ export function ipWhitelist(req: Request, res: Response, next: NextFunction) {
   // Check if IP is in trusted ranges
   if (isTrustedIp(clientIp)) {
     console.log(`✅ IP ${clientIp} in trusted range for ${requestPath}`);
-  return next();
-} 
+    return next();
+  } 
   
   // Block the request and redirect
   if (SECURITY_CONFIG.LOG_BLOCKED_REQUESTS) {

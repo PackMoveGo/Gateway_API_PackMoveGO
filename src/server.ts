@@ -773,6 +773,50 @@ app.get('/api/mobile-test', (req, res) => {
   });
 });
 
+// MOBILE-FRIENDLY DATA ENDPOINTS (BYPASS ALL RESTRICTIONS)
+app.get('/mobile/v0/:name', (req, res) => {
+  const { name } = req.params;
+  const userAgent = req.headers['user-agent'] || 'Unknown';
+  const clientIp = req.ip || req.socket.remoteAddress || 'Unknown';
+  
+  console.log(`📱 MOBILE DATA: ${req.method} /mobile/v0/${name} from ${clientIp}`);
+  console.log(`   User-Agent: "${userAgent.substring(0, 80)}"`);
+  
+  // Set CORS headers for mobile
+  const origin = req.headers.origin || req.headers['origin'] || '';
+  if (origin && origin !== 'null') {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  } else {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+  }
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization,x-api-key,X-Requested-With');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS,HEAD');
+  res.setHeader('Access-Control-Max-Age', '86400');
+  res.setHeader('Vary', 'Origin');
+  
+  const v0DataFiles = [
+    'blog', 'about', 'nav', 'contact', 'referral', 'reviews', 'locations', 'supplies', 'services', 'testimonials'
+  ];
+  
+  if (v0DataFiles.includes(name)) {
+    try {
+      const data = require(`./data/${name.charAt(0).toUpperCase() + name.slice(1)}.json`);
+      return res.json(data);
+    } catch (e) {
+      try {
+        // Try lowercase fallback
+        const data = require(`./data/${name}.json`);
+        return res.json(data);
+      } catch (err) {
+        return res.status(404).json({ error: 'Not found' });
+      }
+    }
+  }
+  
+  res.status(404).json({ error: 'Endpoint not found' });
+});
+
 // SIMPLE MOBILE ENDPOINT
 app.get('/mobile', (req, res) => {
   const userAgent = req.headers['user-agent'] || 'Unknown';
@@ -812,8 +856,13 @@ app.use('/*', (req, res, next) => {
   next();
 });
 
-// Return 403 Forbidden for non-API requests (except root)
+// Return 403 Forbidden for non-API requests (except root and mobile endpoints)
 app.get('*', (req, res) => {
+  // Skip if it's an API route that should be handled by 404 handler
+  if (req.path.startsWith('/api/')) {
+    return; // Let the 404 handler take care of it
+  }
+  
   res.status(403).json({
     success: false,
     message: 'Access Forbidden',

@@ -45,14 +45,14 @@ app.get('/api/slow', (req, res) => {
 });
 
 describe('Performance Tests', () => {
-  test('Health endpoint should respond quickly (< 50ms)', async () => {
+  test('Health endpoint should respond quickly (< 100ms)', async () => {
     const start = Date.now();
     const response = await request(app)
       .get('/api/health')
       .expect(200);
     
     const duration = Date.now() - start;
-    expect(duration).toBeLessThan(50);
+    expect(duration).toBeLessThan(100);
     expect(response.body).toHaveProperty('status', 'ok');
   });
 

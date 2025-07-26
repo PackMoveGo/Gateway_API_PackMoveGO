@@ -409,31 +409,26 @@ app.get('/dashboard', (req, res) => {
 // Apply IP whitelist only to sensitive routes, not globally
 // app.use(ipWhitelist); // Commented out to allow public access
 
-// FINAL CORS ENFORCEMENT - runs after all other middleware
+// ENHANCED CORS FOR ALL REQUESTS - KEEPS BACKEND ALIVE
 app.use((req, res, next) => {
-  const origin = req.headers.origin || req.headers['origin'];
-  const referer = req.headers.referer || req.headers['referer'];
+  const requestOrigin = req.headers.origin || req.headers['origin'] || '';
+  const referer = req.headers.referer || req.headers['referer'] || '';
   
-  // Set CORS headers before response is sent
-  res.on('finish', () => {
-    // This runs after the response is sent, so we need to set headers earlier
-  });
+  // Set CORS headers for ALL requests to keep backend alive
+  if (requestOrigin) {
+    res.setHeader('Access-Control-Allow-Origin', requestOrigin);
+  } else {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+  }
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization,x-api-key');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+  res.setHeader('Vary', 'Origin');
   
-  // Set CORS headers immediately for packmovego.com requests
-  if (origin && (origin === 'https://www.packmovego.com' || origin === 'https://packmovego.com' || origin.includes('packmovego.com'))) {
-    console.log(`🚨 FINAL CORS ENFORCEMENT: Setting headers for ${origin} on ${req.method} ${req.path}`);
-    res.header('Access-Control-Allow-Origin', origin);
-    res.header('Access-Control-Allow-Credentials', 'true');
-    res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization,x-api-key');
-    res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
-    res.header('Vary', 'Origin');
-  } else if (referer && referer.includes('packmovego.com')) {
-    console.log(`🚨 FINAL CORS ENFORCEMENT: Setting headers via referer for ${referer} on ${req.method} ${req.path}`);
-    res.header('Access-Control-Allow-Origin', 'https://www.packmovego.com');
-    res.header('Access-Control-Allow-Credentials', 'true');
-    res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization,x-api-key');
-    res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
-    res.header('Vary', 'Origin');
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
   }
   
   next();

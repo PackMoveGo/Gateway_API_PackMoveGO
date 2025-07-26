@@ -50,7 +50,11 @@ services:
       - key: MAINTENANCE_MODE
         value: false
       - key: ALLOWED_IPS
-        value: 172.58.112.138,127.0.0.1
+        value: 
+      - key: ENABLE_IP_WHITELIST
+        value: false
+      - key: API_KEY_ENABLED
+        value: false
     healthCheckPath: /api/health/simple
     autoDeploy: true
     plan: free 

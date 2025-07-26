@@ -162,6 +162,33 @@ app.use((req, res, next) => {
   next();
 });
 
+// === MOBILE TEST ENDPOINT ===
+// Simple endpoint that works from any device
+app.get('/mobile-test', (req, res) => {
+  const userAgent = req.headers['user-agent'] || 'Unknown';
+  const clientIp = req.ip || req.socket.remoteAddress || 'Unknown';
+  
+  console.log(`📱 MOBILE TEST: Request from ${clientIp} - ${userAgent.substring(0, 50)}`);
+  
+  // Set CORS headers for mobile - ALWAYS allow
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization,x-api-key,X-Requested-With');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS,HEAD');
+  res.setHeader('Access-Control-Max-Age', '86400');
+  res.setHeader('Vary', 'Origin');
+  
+  res.status(200).json({
+    status: 'ok',
+    mobile: true,
+    userAgent: userAgent.substring(0, 100),
+    timestamp: new Date().toISOString(),
+    backend: 'active',
+    message: 'Mobile test successful',
+    ip: clientIp
+  });
+});
+
 // === STATIC FILE SERVING FOR MOBILE DEBUG ===
 // Serve mobile debug page
 app.get('/mobile-debug.html', (req, res) => {

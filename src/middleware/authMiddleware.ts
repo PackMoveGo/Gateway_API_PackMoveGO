@@ -8,6 +8,29 @@ export function validateApiKey(req: Request, res: Response, next: NextFunction) 
     return next();
   }
 
+  // Skip API key validation for /v0/ endpoints (mobile-friendly data endpoints)
+  if (req.path.startsWith('/v0/') || req.path.startsWith('/api/v0/')) {
+    console.log(`✅ /v0/ endpoint - skipping API key validation`);
+    return next();
+  }
+
+  // MOBILE DETECTION - Skip API key validation for mobile devices
+  const userAgent = req.headers['user-agent'] || '';
+  const isMobile = userAgent.includes('Mobile') || 
+                   userAgent.includes('iPhone') || 
+                   userAgent.includes('Android') || 
+                   userAgent.includes('iPad') ||
+                   userAgent.includes('Safari') || 
+                   userAgent.includes('Chrome') || 
+                   userAgent.includes('Firefox') ||
+                   userAgent.includes('Edge') ||
+                   userAgent.includes('Opera');
+  
+  if (isMobile) {
+    console.log(`📱 MOBILE DEVICE - skipping API key validation for ${req.path}`);
+    return next();
+  }
+
   // Check if API key authentication is enabled
   if (process.env.API_KEY_ENABLED !== 'true') {
     return next();
@@ -169,8 +192,26 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
   const clientIp = getClientIp(req);
   const requestPath = req.path;
   const method = req.method;
+  const userAgent = req.headers['user-agent'] || '';
   
   console.log(`🔐 Auth check for IP: ${clientIp} accessing: ${requestPath} (${method})`);
+  
+  // MOBILE DETECTION - Allow mobile devices to access API
+  const isMobile = userAgent.includes('Mobile') || 
+                   userAgent.includes('iPhone') || 
+                   userAgent.includes('Android') || 
+                   userAgent.includes('iPad') ||
+                   userAgent.includes('Safari') || 
+                   userAgent.includes('Chrome') || 
+                   userAgent.includes('Firefox') ||
+                   userAgent.includes('Edge') ||
+                   userAgent.includes('Opera');
+  
+  if (isMobile) {
+    console.log(`📱 MOBILE DEVICE DETECTED: ${userAgent.substring(0, 50)}`);
+    console.log(`✅ MOBILE ACCESS: Allowing mobile request to ${requestPath}`);
+    return next();
+  }
   
   // Always allow OPTIONS requests for CORS preflight
   if (method === 'OPTIONS') {
@@ -186,6 +227,12 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
   // Always allow mobile test endpoint
   if (requestPath === '/api/mobile-test') {
     console.log(`✅ Mobile test endpoint allowed from ${clientIp}`);
+    return next();
+  }
+  
+  // Always allow /v0/ API endpoints (mobile-friendly data endpoints)
+  if (requestPath.startsWith('/v0/') || requestPath.startsWith('/api/v0/')) {
+    console.log(`✅ /v0/ API endpoint allowed from ${clientIp}`);
     return next();
   }
   

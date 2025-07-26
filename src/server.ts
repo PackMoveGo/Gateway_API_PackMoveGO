@@ -368,19 +368,15 @@ app.use((req, res, next) => {
   
   // Debug logging for all requests
   console.log(`🔍 AUTH DEBUG: ${req.method} ${req.path}`);
-  console.log(`   Origin: "${origin}"`);
-  console.log(`   Referer: "${referer}"`);
+  console.log(`   Origin: "${origin || 'None'}"`);
+  console.log(`   Referer: "${referer || 'None'}"`);
   console.log(`   User-Agent: "${req.headers['user-agent']?.substring(0, 50) || 'None'}"`);
   console.log(`   IP: "${req.ip || req.socket.remoteAddress || 'Unknown'}"`);
   console.log(`   All Headers: ${JSON.stringify(Object.keys(req.headers))}`);
   
-  // Allow ALL mobile requests immediately
-  const userAgent = req.headers['user-agent'] || '';
-  if (userAgent.includes('Mobile') || userAgent.includes('iPhone') || userAgent.includes('Android') || 
-      userAgent.includes('Safari') || userAgent.includes('Chrome')) {
-    console.log(`✅ Mobile request allowed immediately: ${req.method} ${req.path}`);
-    return next();
-  }
+  // TEMPORARILY ALLOW ALL REQUESTS - REMOVE THIS LATER
+  console.log(`🚨 TEMPORARY: Allowing ALL requests for debugging`);
+  return next();
   
   // Always allow health checks and public data routes
   if (req.path === '/api/health' || req.path === '/health' || req.path === '/api/health/simple' ||
@@ -389,8 +385,8 @@ app.use((req, res, next) => {
     console.log(`✅ Public route allowed: ${req.method} ${req.path}`);
     
     // Set CORS headers for ALL requests to public routes
-    const origin = req.headers.origin || req.headers['origin'];
-    const referer = req.headers.referer || req.headers['referer'];
+    const origin = req.headers.origin || req.headers['origin'] || '';
+    const referer = req.headers.referer || req.headers['referer'] || '';
     
     // Always set CORS headers for public routes, regardless of origin
     if (origin) {
@@ -446,7 +442,7 @@ app.use((req, res, next) => {
   // Check API key authentication first (highest priority)
   if (process.env.API_KEY_ENABLED === 'true') {
     const apiKey = (Array.isArray(req.headers['x-api-key']) ? req.headers['x-api-key'][0] : req.headers['x-api-key']) || 
-                   req.headers['authorization']?.replace('Bearer ', '');
+                   (req.headers['authorization'] as string)?.replace('Bearer ', '') || '';
     
     const validKeys = [
       process.env.API_KEY_FRONTEND,
@@ -488,7 +484,7 @@ app.use((req, res, next) => {
   // Allow frontend requests from packmovego.com and Vercel domains (domain-based)
   if (origin === 'https://www.packmovego.com' || origin === 'https://packmovego.com' ||
       origin?.includes('vercel.app') ||
-      (referer && (referer.includes('packmovego.com') || referer.includes('vercel.app')))) {
+      (referer && (referer?.includes('packmovego.com') || referer?.includes('vercel.app')))) {
     console.log(`✅ Frontend domain request allowed: ${req.method} ${req.path} from ${origin || referer}`);
     
     // Set CORS headers for domain-based requests

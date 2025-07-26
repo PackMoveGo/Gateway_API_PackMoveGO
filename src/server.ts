@@ -114,8 +114,9 @@ app.options(['/v0/:name', '/v0/:name/'], (req, res) => {
   
   console.log(`🔧 /v0/ OPTIONS CORS CHECK: ${req.method} ${req.path} - Origin: "${origin}" - Referer: "${referer}"`);
   
-  // Set CORS headers for packmovego.com requests
-  if (origin && (origin === 'https://www.packmovego.com' || origin === 'https://packmovego.com' || origin.includes('packmovego.com'))) {
+  // Set CORS headers for packmovego.com and Vercel requests
+  if (origin && (origin === 'https://www.packmovego.com' || origin === 'https://packmovego.com' || 
+                 origin.includes('packmovego.com') || origin.includes('vercel.app'))) {
     console.log(`🔧 /v0/ OPTIONS CORS: Setting headers for origin: ${origin}`);
     res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -123,7 +124,7 @@ app.options(['/v0/:name', '/v0/:name/'], (req, res) => {
     res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
     res.setHeader('Vary', 'Origin');
     console.log(`✅ /v0/ OPTIONS CORS headers set!`);
-  } else if (referer && referer.includes('packmovego.com')) {
+  } else if (referer && (referer.includes('packmovego.com') || referer.includes('vercel.app'))) {
     console.log(`🔧 /v0/ OPTIONS CORS: Setting headers for referer: ${referer}`);
     res.setHeader('Access-Control-Allow-Origin', 'https://www.packmovego.com');
     res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -147,8 +148,9 @@ app.get(['/v0/:name', '/v0/:name/'], (req, res, next) => {
   
   console.log(`🔧 /v0/ CORS CHECK: ${req.method} ${req.path} - Origin: "${origin}" - Referer: "${referer}"`);
   
-  // ALWAYS set CORS headers for packmovego.com requests
-  if (origin && (origin === 'https://www.packmovego.com' || origin === 'https://packmovego.com' || origin.includes('packmovego.com'))) {
+  // ALWAYS set CORS headers for packmovego.com and Vercel requests
+  if (origin && (origin === 'https://www.packmovego.com' || origin === 'https://packmovego.com' || 
+                 origin.includes('packmovego.com') || origin.includes('vercel.app'))) {
     console.log(`🔧 /v0/ CORS: Setting headers for origin: ${origin}`);
     res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -156,7 +158,7 @@ app.get(['/v0/:name', '/v0/:name/'], (req, res, next) => {
     res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
     res.setHeader('Vary', 'Origin');
     console.log(`✅ /v0/ CORS headers set!`);
-  } else if (referer && referer.includes('packmovego.com')) {
+  } else if (referer && (referer.includes('packmovego.com') || referer.includes('vercel.app'))) {
     console.log(`🔧 /v0/ CORS: Setting headers for referer: ${referer}`);
     res.setHeader('Access-Control-Allow-Origin', 'https://www.packmovego.com');
     res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -245,6 +247,8 @@ const allowedCorsOrigins = [
   'http://localhost:5001',
   'https://www.packmovego.com',
   'https://packmovego.com',
+  'https://packmovego-6x8w2t0kw-pack-move-go-frontend.vercel.app',
+  'https://*.vercel.app',
   ...corsOrigins
 ].filter((origin, index, arr) => arr.indexOf(origin) === index);
 
@@ -266,6 +270,12 @@ const corsOptions = {
     // Allow any origin for packmovego.com subdomains
     if (origin.includes('packmovego.com')) {
       console.log(`✅ CORS: Allowing packmovego.com subdomain: ${origin}`);
+      return callback(null, true);
+    }
+    
+    // Allow Vercel domains
+    if (origin.includes('vercel.app')) {
+      console.log(`✅ CORS: Allowing Vercel domain: ${origin}`);
       return callback(null, true);
     }
     
@@ -321,8 +331,9 @@ app.use((req, res, next) => {
   console.log(`   Origin: "${origin}" (type: ${typeof origin})`);
   console.log(`   Referer: "${referer}"`);
   
-  // Set CORS headers for all packmovego.com requests
-  if (origin && (origin === 'https://www.packmovego.com' || origin === 'https://packmovego.com' || origin.includes('packmovego.com'))) {
+  // Set CORS headers for all packmovego.com and Vercel requests
+  if (origin && (origin === 'https://www.packmovego.com' || origin === 'https://packmovego.com' || 
+                 origin.includes('packmovego.com') || origin.includes('vercel.app'))) {
     console.log(`🔧 GLOBAL CORS: Setting headers for origin: ${origin}`);
     res.header('Access-Control-Allow-Origin', origin);
     res.header('Access-Control-Allow-Credentials', 'true');
@@ -330,7 +341,7 @@ app.use((req, res, next) => {
     res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
     res.header('Vary', 'Origin');
     console.log(`✅ GLOBAL CORS headers set!`);
-  } else if (referer && referer.includes('packmovego.com')) {
+  } else if (referer && (referer.includes('packmovego.com') || referer.includes('vercel.app'))) {
     console.log(`🔧 GLOBAL CORS: Setting headers for referer: ${referer}`);
     res.header('Access-Control-Allow-Origin', 'https://www.packmovego.com');
     res.header('Access-Control-Allow-Credentials', 'true');
@@ -364,7 +375,8 @@ app.use((req, res, next) => {
     const origin = req.headers.origin || req.headers['origin'];
     const referer = req.headers.referer || req.headers['referer'];
     
-    if (origin && (origin === 'https://www.packmovego.com' || origin === 'https://packmovego.com' || origin.includes('packmovego.com'))) {
+    if (origin && (origin === 'https://www.packmovego.com' || origin === 'https://packmovego.com' || 
+                   origin.includes('packmovego.com') || origin.includes('vercel.app'))) {
       console.log(`🔧 PUBLIC ROUTE CORS: Setting headers for origin: ${origin}`);
       res.setHeader('Access-Control-Allow-Origin', origin);
       res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -372,7 +384,7 @@ app.use((req, res, next) => {
       res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
       res.setHeader('Vary', 'Origin');
       console.log(`✅ PUBLIC ROUTE CORS headers set!`);
-    } else if (referer && referer.includes('packmovego.com')) {
+    } else if (referer && (referer.includes('packmovego.com') || referer.includes('vercel.app'))) {
       console.log(`🔧 PUBLIC ROUTE CORS: Setting headers for referer: ${referer}`);
       res.setHeader('Access-Control-Allow-Origin', 'https://www.packmovego.com');
       res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -441,9 +453,10 @@ app.use((req, res, next) => {
     return next();
   }
   
-  // Allow frontend requests from packmovego.com (domain-based)
+  // Allow frontend requests from packmovego.com and Vercel domains (domain-based)
   if (origin === 'https://www.packmovego.com' || origin === 'https://packmovego.com' ||
-      (referer && (referer.includes('packmovego.com')))) {
+      origin?.includes('vercel.app') ||
+      (referer && (referer.includes('packmovego.com') || referer.includes('vercel.app')))) {
     console.log(`✅ Frontend domain request allowed: ${req.method} ${req.path} from ${origin || referer}`);
     
     // Set CORS headers for domain-based requests

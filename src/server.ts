@@ -399,6 +399,26 @@ app.use((req, res, next) => {
     return next();
   }
   
+  // Allow requests from frontend domains (including Vercel)
+  if (origin === 'https://www.packmovego.com' || origin === 'https://packmovego.com' ||
+      origin?.includes('vercel.app') ||
+      (referer && (referer.includes('packmovego.com') || referer.includes('vercel.app')))) {
+    console.log(`✅ Frontend domain request allowed: ${req.method} ${req.path} from ${origin || referer}`);
+    
+    // Set CORS headers for frontend requests
+    if (origin) {
+      console.log(`🔧 FRONTEND CORS: Setting headers for ${origin}`);
+      res.setHeader('Access-Control-Allow-Origin', origin);
+      res.setHeader('Access-Control-Allow-Credentials', 'true');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization,x-api-key');
+      res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+      res.setHeader('Vary', 'Origin');
+      console.log(`✅ FRONTEND CORS headers set!`);
+    }
+    
+    return next();
+  }
+  
   // Get client IP for whitelist check
   let clientIp = req.headers['x-forwarded-for']?.toString().split(',')[0].trim() || 
                  req.headers['x-real-ip']?.toString() || 

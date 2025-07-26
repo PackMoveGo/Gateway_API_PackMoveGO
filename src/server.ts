@@ -107,8 +107,67 @@ const v0DataFiles = [
   'blog', 'about', 'nav', 'contact', 'referral', 'reviews', 'locations', 'supplies', 'services', 'testimonials'
 ];
 
+// Handle OPTIONS requests for /v0/ routes (preflight)
+app.options(['/v0/:name', '/v0/:name/'], (req, res) => {
+  const origin = req.headers.origin || req.headers['origin'];
+  const referer = req.headers.referer || req.headers['referer'];
+  
+  console.log(`🔧 /v0/ OPTIONS CORS CHECK: ${req.method} ${req.path} - Origin: "${origin}" - Referer: "${referer}"`);
+  
+  // Set CORS headers for packmovego.com requests
+  if (origin && (origin === 'https://www.packmovego.com' || origin === 'https://packmovego.com' || origin.includes('packmovego.com'))) {
+    console.log(`🔧 /v0/ OPTIONS CORS: Setting headers for origin: ${origin}`);
+    res.header('Access-Control-Allow-Origin', origin);
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization,x-api-key');
+    res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+    res.header('Vary', 'Origin');
+    console.log(`✅ /v0/ OPTIONS CORS headers set!`);
+  } else if (referer && referer.includes('packmovego.com')) {
+    console.log(`🔧 /v0/ OPTIONS CORS: Setting headers for referer: ${referer}`);
+    res.header('Access-Control-Allow-Origin', 'https://www.packmovego.com');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization,x-api-key');
+    res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+    res.header('Vary', 'Origin');
+    console.log(`✅ /v0/ OPTIONS CORS headers set via referer!`);
+  } else {
+    console.log(`❌ /v0/ OPTIONS CORS: No headers set. Origin: "${origin}", Referer: "${referer}"`);
+  }
+  
+  res.status(200).end();
+});
+
 app.get(['/v0/:name', '/v0/:name/'], (req, res, next) => {
   const { name } = req.params;
+  
+  // Set CORS headers for /v0/ routes
+  const origin = req.headers.origin || req.headers['origin'];
+  const referer = req.headers.referer || req.headers['referer'];
+  
+  console.log(`🔧 /v0/ CORS CHECK: ${req.method} ${req.path} - Origin: "${origin}" - Referer: "${referer}"`);
+  
+  // Set CORS headers for packmovego.com requests
+  if (origin && (origin === 'https://www.packmovego.com' || origin === 'https://packmovego.com' || origin.includes('packmovego.com'))) {
+    console.log(`🔧 /v0/ CORS: Setting headers for origin: ${origin}`);
+    res.header('Access-Control-Allow-Origin', origin);
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization,x-api-key');
+    res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+    res.header('Vary', 'Origin');
+    console.log(`✅ /v0/ CORS headers set!`);
+  } else if (referer && referer.includes('packmovego.com')) {
+    console.log(`🔧 /v0/ CORS: Setting headers for referer: ${referer}`);
+    res.header('Access-Control-Allow-Origin', 'https://www.packmovego.com');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization,x-api-key');
+    res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+    res.header('Vary', 'Origin');
+    console.log(`✅ /v0/ CORS headers set via referer!`);
+  } else {
+    console.log(`❌ /v0/ CORS: No headers set. Origin: "${origin}", Referer: "${referer}"`);
+  }
+  
   if (v0DataFiles.includes(name)) {
     try {
       const data = require(`./data/${name.charAt(0).toUpperCase() + name.slice(1)}.json`);

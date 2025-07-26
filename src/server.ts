@@ -442,14 +442,14 @@ app.use((req, res, next) => {
   // Check API key authentication first (highest priority)
   if (process.env.API_KEY_ENABLED === 'true') {
     const apiKey = (Array.isArray(req.headers['x-api-key']) ? req.headers['x-api-key'][0] : req.headers['x-api-key']) || 
-                   (req.headers['authorization'] as string)?.replace('Bearer ', '') || '';
+                   ((req.headers['authorization'] as string) || '').replace('Bearer ', '');
     
     const validKeys = [
       process.env.API_KEY_FRONTEND,
       process.env.API_KEY_ADMIN
     ].filter(Boolean);
     
-    if (apiKey && validKeys.includes(apiKey)) {
+    if (apiKey && typeof apiKey === 'string' && validKeys.includes(apiKey)) {
       const keyType = apiKey === process.env.API_KEY_FRONTEND ? 'frontend' : 
                       apiKey === process.env.API_KEY_ADMIN ? 'admin' : 'unknown';
       console.log(`✅ Valid ${keyType} API key for ${req.method} ${req.path} from ${clientIp}`);
@@ -484,7 +484,7 @@ app.use((req, res, next) => {
   // Allow frontend requests from packmovego.com and Vercel domains (domain-based)
   if (origin === 'https://www.packmovego.com' || origin === 'https://packmovego.com' ||
       origin?.includes('vercel.app') ||
-      (referer && (referer?.includes('packmovego.com') || referer?.includes('vercel.app')))) {
+      (referer && (referer.includes('packmovego.com') || referer.includes('vercel.app')))) {
     console.log(`✅ Frontend domain request allowed: ${req.method} ${req.path} from ${origin || referer}`);
     
     // Set CORS headers for domain-based requests

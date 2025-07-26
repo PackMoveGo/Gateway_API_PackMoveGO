@@ -361,31 +361,66 @@ app.use(cookieParser());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// MOBILE-FRIENDLY API - Simplified Authentication
+// COMPREHENSIVE MOBILE-FRIENDLY API - NO RESTRICTIONS
 app.use((req, res, next) => {
   const origin = req.headers.origin || req.headers['origin'] || '';
   const userAgent = req.headers['user-agent'] || '';
+  const clientIp = req.ip || req.socket.remoteAddress || 'Unknown';
   
-  // Debug logging for all requests
-  console.log(`🔍 MOBILE API: ${req.method} ${req.path}`);
+  // COMPREHENSIVE MOBILE LOGGING
+  console.log(`📱 MOBILE CHECK: ${req.method} ${req.path}`);
   console.log(`   Origin: "${origin || 'None'}"`);
-  console.log(`   User-Agent: "${userAgent.substring(0, 50) || 'None'}"`);
-  console.log(`   IP: "${req.ip || req.socket.remoteAddress || 'Unknown'}"`);
+  console.log(`   User-Agent: "${userAgent.substring(0, 100) || 'None'}"`);
+  console.log(`   IP: "${clientIp}"`);
+  console.log(`   Timestamp: ${new Date().toISOString()}`);
   
-  // ALL REQUESTS ALLOWED - MOBILE FRIENDLY
-  console.log(`✅ MOBILE API: All requests allowed`);
+  // DETECT MOBILE DEVICES
+  const isMobile = userAgent.includes('Mobile') || 
+                   userAgent.includes('iPhone') || 
+                   userAgent.includes('Android') || 
+                   userAgent.includes('iPad') ||
+                   userAgent.includes('Safari') || 
+                   userAgent.includes('Chrome') || 
+                   userAgent.includes('Firefox') ||
+                   userAgent.includes('Edge');
   
-  // Set CORS headers for ALL requests
-  if (origin) {
+  if (isMobile) {
+    console.log(`📱 MOBILE DEVICE DETECTED: ${userAgent.substring(0, 50)}`);
+  }
+  
+  // UNIVERSAL CORS FOR ALL REQUESTS (MOBILE FRIENDLY)
+  console.log(`✅ UNIVERSAL CORS: Setting headers for all requests`);
+  
+  // Always set CORS headers regardless of origin
+  if (origin && origin !== 'null') {
     res.setHeader('Access-Control-Allow-Origin', origin);
+    console.log(`✅ CORS: Set origin header for ${origin}`);
   } else {
     res.setHeader('Access-Control-Allow-Origin', '*');
+    console.log(`✅ CORS: Set wildcard origin header`);
   }
+  
+  // Essential CORS headers for mobile
   res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization,x-api-key');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization,x-api-key,X-Requested-With');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS,HEAD');
+  res.setHeader('Access-Control-Max-Age', '86400'); // 24 hours
   res.setHeader('Vary', 'Origin');
   
+  // Handle preflight requests immediately
+  if (req.method === 'OPTIONS') {
+    console.log(`🔄 PREFLIGHT: Handling OPTIONS request for ${req.path}`);
+    res.status(200).end();
+    return;
+  }
+  
+  // Log response completion
+  res.on('finish', () => {
+    console.log(`✅ RESPONSE: ${req.method} ${req.path} - Status: ${res.statusCode} - Mobile: ${isMobile ? 'Yes' : 'No'} - Completed at ${new Date().toISOString()}`);
+  });
+  
+  // ALL REQUESTS ALLOWED - NO AUTHENTICATION
+  console.log(`✅ MOBILE API: All requests allowed - No authentication required`);
   return next();
 });
 
@@ -693,6 +728,45 @@ app.get('/api/ping', (req, res) => {
     pong: true,
     timestamp: new Date().toISOString(),
     backend: 'active'
+  });
+});
+
+// MOBILE CONNECTIVITY TEST ENDPOINT
+app.get('/api/mobile-test', (req, res) => {
+  const userAgent = req.headers['user-agent'] || 'Unknown';
+  const clientIp = req.ip || req.socket.remoteAddress || 'Unknown';
+  const origin = req.headers.origin || req.headers['origin'] || 'None';
+  
+  console.log(`📱 MOBILE TEST: Request from ${clientIp}`);
+  console.log(`   User-Agent: "${userAgent.substring(0, 100)}"`);
+  console.log(`   Origin: "${origin}"`);
+  console.log(`   Timestamp: ${new Date().toISOString()}`);
+  
+  const isMobile = userAgent.includes('Mobile') || 
+                   userAgent.includes('iPhone') || 
+                   userAgent.includes('Android') || 
+                   userAgent.includes('iPad');
+  
+  res.status(200).json({
+    success: true,
+    message: 'Mobile connectivity test successful',
+    mobile: isMobile,
+    userAgent: userAgent.substring(0, 100),
+    origin: origin,
+    timestamp: new Date().toISOString(),
+    backend: 'active'
+  });
+});
+
+// SIMPLE MOBILE ENDPOINT
+app.get('/mobile', (req, res) => {
+  const userAgent = req.headers['user-agent'] || 'Unknown';
+  console.log(`📱 SIMPLE MOBILE: Request from ${req.ip} - ${userAgent.substring(0, 50)}`);
+  
+  res.status(200).json({
+    message: 'Mobile API working',
+    timestamp: new Date().toISOString(),
+    userAgent: userAgent.substring(0, 50)
   });
 });
 

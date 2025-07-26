@@ -15,7 +15,7 @@ try {
     HOST: '0.0.0.0',
     MAX_CONNECTIONS: 5,
     SESSION_TIMEOUT: 3600000,
-    ALLOWED_IPS: [],
+  
     FRONTEND_IP: '',
     ADMIN_PASSWORD: ''
   };
@@ -57,7 +57,6 @@ router.get('/config', authMiddleware, (req, res) => {
     config: {
       port: SSH_CONFIG.PORT,
       host: SSH_CONFIG.HOST,
-      allowedIPs: SSH_CONFIG.ALLOWED_IPS,
       frontendIP: SSH_CONFIG.FRONTEND_IP,
       sessionTimeout: SSH_CONFIG.SESSION_TIMEOUT,
       maxConnections: SSH_CONFIG.MAX_CONNECTIONS
@@ -115,7 +114,6 @@ router.get('/instructions', authMiddleware, (req, res) => {
     instructions: {
       connection: `ssh -p ${SSH_CONFIG.PORT} admin@${SSH_CONFIG.HOST}`,
       password: SSH_CONFIG.ADMIN_PASSWORD,
-      allowedIPs: SSH_CONFIG.ALLOWED_IPS,
       sessionTimeout: `${SSH_CONFIG.SESSION_TIMEOUT / 1000} seconds`,
       commands: [
         'help - Show available commands',

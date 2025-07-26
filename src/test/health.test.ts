@@ -46,7 +46,7 @@ describe('Environment Configuration', () => {
     expect(process.env.PORT).toBe('3001');
     
     // Check that required env vars are set (even if they're test values)
-    expect(process.env.ALLOWED_IPS).toBeDefined();
+  
     expect(process.env.ADMIN_PASSWORD).toBeDefined();
     expect(process.env.JWT_SECRET).toBeDefined();
     expect(process.env.CORS_ORIGIN).toBeDefined();

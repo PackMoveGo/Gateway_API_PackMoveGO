@@ -67,8 +67,7 @@ class BackupSystem {
       port: process.env.PORT,
       corsOrigins: process.env.CORS_ORIGIN,
       apiKeyEnabled: process.env.API_KEY_ENABLED,
-      ipWhitelistEnabled: process.env.ENABLE_IP_WHITELIST,
-      allowedIps: process.env.ALLOWED_IPS?.split(',').length || 0,
+      
       timestamp: new Date().toISOString()
     };
   }

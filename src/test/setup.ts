@@ -33,7 +33,7 @@ jest.setTimeout(10000);
 // Mock environment variables for testing
 (process.env as any).NODE_ENV = 'test';
 process.env.PORT = '3001';
-process.env.ALLOWED_IPS = '127.0.0.1,::1';
+
 process.env.ADMIN_PASSWORD = 'test_password';
 process.env.API_KEY_ENABLED = 'false';
 process.env.JWT_SECRET = 'test_jwt_secret';

@@ -84,8 +84,7 @@ const AUTH_CONFIG ={
   JWT_SECRET:process.env.JWT_SECRET||'Bad Auth',
   SESSION_DURATION:10*60*1000,//10 minutes in milliseconds
   ADMIN_PASSWORD:process.env.ADMIN_PASSWORD||'Bad Auth',
-  FRONTEND_IP:process.env.ALLOWED_IPS?.split(',')[0]?.trim()||'Bad Auth',
-  ALLOWED_IPS:(process.env.ALLOWED_IPS||'').split(',').map(ip => ip.trim()).filter(Boolean),
+
   REDIRECT_URL:'https://www.packmovego.com',
   FRONTEND_DOMAIN:'https://www.packmovego.com',
   API_DOMAIN:'https://api.packmovego.com'
@@ -130,15 +129,7 @@ function isFrontendRequest(req: Request): boolean {
   return false;
 }
 
-// Check if IP is the frontend IP
-function isFrontendIp(ip: string): boolean {
-  return ip === AUTH_CONFIG.FRONTEND_IP;
-}
 
-// Check if IP is in allowed list
-function isAllowedIp(ip: string): boolean {
-  return AUTH_CONFIG.ALLOWED_IPS.includes(ip);
-}
 
 // Generate JWT token
 function generateToken(ip: string): string {
@@ -242,11 +233,7 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
     return next();
   }
   
-  // Check if IP is in allowed list - if NOT allowed, redirect to frontend
-  if (!isAllowedIp(clientIp)) {
-    console.log(`🚫 IP ${clientIp} not in allowed list, redirecting to ${AUTH_CONFIG.REDIRECT_URL}`);
-    return res.redirect(302, AUTH_CONFIG.REDIRECT_URL);
-  }
+
   
   // For authenticated users accessing dashboard, allow access
   if (requestPath === '/dashboard' && isAuthenticated(req)) {
@@ -285,13 +272,7 @@ export function handleLogin(req: Request, res: Response) {
   
   console.log(`🔐 Login attempt from IP: ${clientIp}`);
   
-  if (!isAllowedIp(clientIp)) {
-    console.log(`🚫 Login attempt from unauthorized IP: ${clientIp}`);
-    return res.status(403).json({
-      success: false,
-      message: 'Access denied'
-    });
-  }
+
   
   if (password === AUTH_CONFIG.ADMIN_PASSWORD) {
     const token = generateToken(clientIp);
@@ -359,8 +340,8 @@ export function checkAuthStatus(req: Request, res: Response) {
     authenticated: isAuth,
     ip: clientIp,
     isFrontend: isFrontend,
-    isAllowed: isAllowedIp(clientIp),
-    requiresPassword: isAllowedIp(clientIp) && !isFrontend
+    isAllowed: true,
+    requiresPassword: !isFrontend
   });
 }
 

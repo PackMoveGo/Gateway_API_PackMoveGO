@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
-import { ipWhitelist, SECURITY_CONFIG } from './ipWhitelist';
+
 import { authMiddleware } from './authMiddleware';
 
 // Rate limiting configuration - stricter for production
@@ -196,5 +196,5 @@ export const securityMiddleware = [
   additionalSecurityHeaders
 ];
 
-// Export security configuration and auth middleware for specific routes
-export { SECURITY_CONFIG, authMiddleware }; 
+// Export auth middleware for specific routes
+export { authMiddleware }; 

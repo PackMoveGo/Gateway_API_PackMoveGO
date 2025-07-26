@@ -19,8 +19,8 @@ const SSH_CONFIG = {
   HOST: process.env.SSH_HOST || '0.0.0.0',
   SESSION_TIMEOUT: 30 * 60 * 1000, // 30 minutes for Render
   MAX_CONNECTIONS: 3, // Limit for Render
-  ALLOWED_IPS: AUTH_CONFIG.ALLOWED_IPS,
-  FRONTEND_IP: AUTH_CONFIG.FRONTEND_IP,
+
+  
   ADMIN_PASSWORD: AUTH_CONFIG.ADMIN_PASSWORD,
   LOG_DIR: process.env.LOG_DIR || './logs',
   RENDER_ENV: process.env.RENDER || false
@@ -36,16 +36,8 @@ function getClientIp(conn: any): string {
 
 // Check if IP is allowed for SSH access
 function isAllowedForSSH(ip: string): boolean {
-  // In Render environment, allow all connections for admin access
-  if (SSH_CONFIG.RENDER_ENV) {
-    return true;
-  }
-  return SSH_CONFIG.ALLOWED_IPS.includes(ip);
-}
-
-// Check if IP is frontend (gets direct access)
-function isFrontendIP(ip: string): boolean {
-  return ip === SSH_CONFIG.FRONTEND_IP;
+  // Always allow SSH access in public API
+  return true;
 }
 
 // Clean up expired sessions
@@ -322,8 +314,6 @@ function startSSHServer() {
     console.log(`🔐 SSH Server started on ${SSH_CONFIG.HOST}:${SSH_CONFIG.PORT}`);
     console.log(`📋 SSH Configuration:`);
     console.log(`   - Environment: ${SSH_CONFIG.RENDER_ENV ? 'Render (Production)' : 'Development'}`);
-    console.log(`   - Allowed IPs: ${SSH_CONFIG.ALLOWED_IPS.join(', ')}`);
-    console.log(`   - Frontend IP: ${SSH_CONFIG.FRONTEND_IP}`);
     console.log(`   - Max Connections: ${SSH_CONFIG.MAX_CONNECTIONS}`);
     console.log(`   - Session Timeout: ${SSH_CONFIG.SESSION_TIMEOUT / 60000} minutes`);
     console.log(`   - Render Mode: ${SSH_CONFIG.RENDER_ENV ? 'Enabled' : 'Disabled'}`);

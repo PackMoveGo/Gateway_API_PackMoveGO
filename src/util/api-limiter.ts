@@ -32,10 +32,8 @@ export const createAdvancedRateLimiter = () => {
         clientIp = clientIp.substring(7);
       }
       
-      const allowedIps = (process.env.ALLOWED_IPS || '').split(',').map(ip => ip.trim()).filter(Boolean);
-      if (allowedIps.includes(clientIp)) {
-        return 300; // 300 requests per 15 minutes for whitelisted IPs
-      }
+      
+      
       
       // Default for other requests
       return 100; // 100 requests per 15 minutes

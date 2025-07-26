@@ -49,10 +49,7 @@ services:
         value: 100
       - key: MAINTENANCE_MODE
         value: false
-      - key: ALLOWED_IPS
-        value: 
-      - key: ENABLE_IP_WHITELIST
-        value: false
+
       - key: API_KEY_ENABLED
         value: false
     healthCheckPath: /api/health/simple

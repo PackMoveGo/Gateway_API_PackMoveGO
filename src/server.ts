@@ -15,7 +15,7 @@ import fs from 'fs';
 import { securityMiddleware, authMiddleware } from './middleware/security';
 import dataRoutes from './route/dataRoutes';
 import servicesRoutes from './route/servicesRoutes';
-import { ipWhitelist } from './middleware/ipWhitelist';
+
 import serverMonitor from './util/monitor';
 import { performanceMiddleware } from './util/performance-monitor';
 import analyticsRoutes from './route/analyticsRoutes';
@@ -764,8 +764,7 @@ app.get('/dashboard', (req, res) => {
   });
 });
 
-// Apply IP whitelist only to sensitive routes, not globally
-// app.use(ipWhitelist); // Commented out to allow public access
+
 
 // ENHANCED CORS FOR ALL REQUESTS - KEEPS BACKEND ALIVE
 app.use((req, res, next) => {
@@ -1275,9 +1274,7 @@ server = app.listen(port, '0.0.0.0', () => {
   const emailStatus = process.env.EMAIL_USER ? '✅ Configured' : '❌ Not configured';
   console.log(`📧 Email: ${emailStatus}`);
 
-  // Check IP Whitelist
-  const ipWhitelistStatus = '❌ Disabled (public API)';
-  console.log(`🔐 IP Whitelist: ${ipWhitelistStatus}`);
+
 
   console.log('🎯 === REST API Ready ===');
   console.log('📡 All endpoints served directly from this server');

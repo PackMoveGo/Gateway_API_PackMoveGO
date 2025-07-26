@@ -372,10 +372,12 @@ app.use((req, res, next) => {
   console.log(`   Referer: "${referer}"`);
   console.log(`   User-Agent: "${req.headers['user-agent']?.substring(0, 50) || 'None'}"`);
   console.log(`   IP: "${req.ip || req.socket.remoteAddress || 'Unknown'}"`);
+  console.log(`   All Headers: ${JSON.stringify(Object.keys(req.headers))}`);
   
   // Always allow health checks and public data routes
   if (req.path === '/api/health' || req.path === '/health' || req.path === '/api/health/simple' ||
-      req.path.startsWith('/v0/') || req.path.startsWith('/api/v0/')) {
+      req.path.startsWith('/v0/') || req.path.startsWith('/api/v0/') ||
+      req.path.startsWith('/api/data/') || req.path.startsWith('/data/')) {
     console.log(`✅ Public route allowed: ${req.method} ${req.path}`);
     
     // Set CORS headers for public routes
@@ -505,6 +507,14 @@ app.use((req, res, next) => {
   // Block all other requests in production
   if (process.env.NODE_ENV === 'production') {
     console.log(`🚫 Blocked request: ${req.method} ${req.path} from ${origin || 'unknown'}, IP: ${clientIp}`);
+    
+    // Allow mobile requests even if they don't have proper headers
+    const userAgent = req.headers['user-agent'] || '';
+    if (userAgent.includes('Mobile') || userAgent.includes('iPhone') || userAgent.includes('Android')) {
+      console.log(`✅ Mobile request allowed: ${req.method} ${req.path}`);
+      return next();
+    }
+    
     return res.status(403).json({
       error: 'Access denied',
       message: 'Access requires: valid API key, whitelisted IP, or packmovego.com domain',

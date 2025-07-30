@@ -29,9 +29,9 @@ class AIService {
 
   constructor() {
     const aiConfig = configManager.getServicesConfig().ai;
-    this.openaiApiKey = aiConfig.openai.apiKey;
+    this.openaiApiKey = aiConfig.openai.apiKey || '';
     this.openaiModel = aiConfig.openai.model;
-    this.anthropicApiKey = aiConfig.anthropic.apiKey;
+    this.anthropicApiKey = aiConfig.anthropic.apiKey || '';
     this.anthropicModel = aiConfig.anthropic.model;
     this.isOpenAIEnabled = aiConfig.openai.enabled;
     this.isAnthropicEnabled = aiConfig.anthropic.enabled;

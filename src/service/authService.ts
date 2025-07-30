@@ -1,6 +1,6 @@
 import User, { IUser } from '../model/userModel';
 import JWTUtils from '../util/jwt-utils';
-import OAuthService from './oauthService';
+import OAuthService, { oauthService } from './oauthService';
 import crypto from 'crypto';
 
 export interface AuthResult {
@@ -60,6 +60,9 @@ export class AuthService {
     });
 
     // Store refresh token
+    if (!user.refreshTokens) {
+      user.refreshTokens = [];
+    }
     user.refreshTokens.push(JWTUtils.hashToken(refreshToken));
     await user.save();
 
@@ -100,6 +103,9 @@ export class AuthService {
     });
 
     // Store refresh token
+    if (!user.refreshTokens) {
+      user.refreshTokens = [];
+    }
     user.refreshTokens.push(JWTUtils.hashToken(refreshToken));
     await user.save();
 
@@ -115,6 +121,9 @@ export class AuthService {
       const decoded = JWTUtils.verifyRefreshToken(refreshToken);
       
       // Find user
+      if (!decoded) {
+        throw new Error('Invalid refresh token');
+      }
       const user = await User.findById(decoded.userId).select('+refreshTokens');
       if (!user) {
         throw new Error('User not found');
@@ -232,7 +241,7 @@ export class AuthService {
     }
 
     // Mark email as verified
-    user.isEmailVerified = true;
+    user.isVerified = true;
     user.emailVerificationToken = undefined;
     user.emailVerificationExpires = undefined;
     await user.save();
@@ -247,7 +256,7 @@ export class AuthService {
       return 'If an account with this email exists, a verification link has been sent.';
     }
 
-    if (user.isEmailVerified) {
+    if (user.isEmailVerified()) {
       return 'Email is already verified.';
     }
 
@@ -329,7 +338,14 @@ export class AuthService {
    * Handle OAuth login
    */
   static async oauthLogin(provider: string, code: string): Promise<AuthResult> {
-    return OAuthService.handleOAuthCallback(provider, code);
+    if (provider === 'google') {
+      const result = await oauthService.handleGoogleAuth(code);
+      return result;
+    } else if (provider === 'facebook') {
+      const result = await oauthService.handleFacebookAuth(code);
+      return result;
+    }
+    throw new Error('Unsupported OAuth provider');
   }
 
   /**
@@ -337,7 +353,14 @@ export class AuthService {
    */
   static getOAuthUrl(provider: string): { url: string; state: string } {
     const state = JWTUtils.generateOAuthStateToken();
-    const url = OAuthService.getOAuthUrl(provider, state);
+    let url: string;
+    if (provider === 'google') {
+      url = oauthService.getGoogleAuthUrl();
+    } else if (provider === 'facebook') {
+      url = oauthService.getFacebookAuthUrl();
+    } else {
+      throw new Error('Unsupported OAuth provider');
+    }
     return { url, state };
   }
 }

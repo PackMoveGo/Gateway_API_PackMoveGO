@@ -4,6 +4,20 @@ export interface IBooking extends Document {
   totalWeight?: number;
   totalVolume?: number;
   isExpired?: boolean;
+  // Instance methods
+  updateStatus(newStatus: string, notes?: string, updatedBy?: mongoose.Types.ObjectId): Promise<IBooking>;
+  addMessage(senderId: mongoose.Types.ObjectId, senderType: string, message: string, attachments?: string[]): Promise<IBooking>;
+  updateLocation(latitude: number, longitude: number, address?: string): Promise<IBooking>;
+  addCheckpoint(location: string, status: string, notes?: string): Promise<IBooking>;
+  addAIInteraction(question: string, answer: string, helpful?: boolean): Promise<IBooking>;
+  setRating(rating: {
+    overall: number;
+    communication: number;
+    punctuality: number;
+    care: number;
+    value: number;
+    comment?: string;
+  }): Promise<IBooking>;
   // Basic booking information
   bookingId: string;
   customerId: mongoose.Types.ObjectId;
@@ -490,7 +504,16 @@ bookingSchema.methods.setRating = function(rating: {
   return this.save();
 };
 
+// Interface for the model with static methods
+interface IBookingModel extends mongoose.Model<IBooking> {
+  findByBookingId(bookingId: string): Promise<IBooking | null>;
+  findByCustomer(customerId: string): Promise<IBooking[]>;
+  findByMover(moverId: string): Promise<IBooking[]>;
+  findActiveBookings(): Promise<IBooking[]>;
+  findExpiredQuotes(): Promise<IBooking[]>;
+}
+
 // Export the model
-export const Booking = mongoose.model<IBooking>('Booking', bookingSchema);
+export const Booking = mongoose.model<IBooking, IBookingModel>('Booking', bookingSchema);
 
 export default Booking; 

@@ -4,6 +4,7 @@ import { configManager } from '../config/app-config';
 import { User } from '../model/userModel';
 import { consoleLogger } from '../util/console-logger';
 import { sendSuccess, sendError } from '../util/response-formatter';
+import JWTUtils from '../util/jwt-utils';
 
 interface OAuthUser {
   id: string;
@@ -226,15 +227,8 @@ class OAuthService {
       oauthProvider: user.oauthProvider
     };
 
-    const accessToken = jwt.sign(payload, this.jwtSecret, {
-      expiresIn: configManager.getSecurityConfig().jwtExpiresIn
-    });
-
-    const refreshToken = jwt.sign(
-      { userId: user._id, type: 'refresh' },
-      this.jwtSecret,
-      { expiresIn: '7d' }
-    );
+    const accessToken = JWTUtils.generateAccessToken(payload);
+    const refreshToken = JWTUtils.generateRefreshToken({ userId: user._id, email: user.email, role: user.role });
 
     return {
       accessToken,

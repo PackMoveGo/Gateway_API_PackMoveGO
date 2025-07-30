@@ -8,12 +8,16 @@ export interface IUser extends Document {
   incrementLoginAttempts(): Promise<void>;
   resetLoginAttempts(): Promise<void>;
   isAccountLocked(): boolean;
-  refreshTokens(token: string): Promise<void>;
+  refreshTokens: string[];
   isEmailVerified(): boolean;
   emailVerificationToken?: string;
   emailVerificationExpires?: Date;
   passwordResetToken?: string;
   passwordResetExpires?: Date;
+  // Instance methods
+  updateLocation(latitude: number, longitude: number): Promise<IUser>;
+  setAvailability(isAvailable: boolean): Promise<IUser>;
+  updateRating(newRating: number): Promise<IUser>;
   // Basic information
   email: string;
   firstName: string;
@@ -148,6 +152,10 @@ const userSchema = new Schema<IUser>({
   refreshToken: {
     type: String,
     default: null
+  },
+  refreshTokens: {
+    type: [String],
+    default: []
   },
   
   // Role and permissions
@@ -368,10 +376,7 @@ userSchema.methods.isAccountLocked = function(): boolean {
   return false;
 };
 
-userSchema.methods.refreshTokens = async function(token: string): Promise<void> {
-  this.refreshToken = token;
-  await this.save();
-};
+
 
 userSchema.methods.isEmailVerified = function(): boolean {
   return this.isVerified;
@@ -414,7 +419,14 @@ userSchema.methods.updateRating = function(newRating: number) {
   throw new Error('Only movers can update rating');
 };
 
+// Interface for the model with static methods
+interface IUserModel extends mongoose.Model<IUser> {
+  findByEmail(email: string): Promise<IUser | null>;
+  findByOAuth(provider: string, oauthId: string): Promise<IUser | null>;
+  findAvailableMovers(): Promise<IUser[]>;
+}
+
 // Export the model
-export const User = mongoose.model<IUser>('User', userSchema);
+export const User = mongoose.model<IUser, IUserModel>('User', userSchema);
 
 export default User; 

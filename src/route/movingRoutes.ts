@@ -160,13 +160,13 @@ router.get('/bookings/:bookingId', asyncHandler(async (req: Request, res: Respon
   const { bookingId } = req.params;
 
   try {
-    const booking = await Booking.findByBookingId(bookingId)
-      .populate('customerId', 'firstName lastName email phone')
-      .populate('moverId', 'firstName lastName moverInfo');
-
+    const booking = await Booking.findByBookingId(bookingId);
     if (!booking) {
       return sendError(res, 'Booking not found', 404);
     }
+
+    await booking.populate('customerId', 'firstName lastName email phone');
+    await booking.populate('moverId', 'firstName lastName moverInfo');
 
     return sendSuccess(res, booking, 'Booking retrieved successfully');
   } catch (error) {
@@ -305,10 +305,13 @@ router.get('/ai/status', (req: Request, res: Response) => {
 // Get available movers
 router.get('/movers/available', asyncHandler(async (req: Request, res: Response) => {
   try {
-    const movers = await User.findAvailableMovers()
-      .select('firstName lastName moverInfo.rating moverInfo.totalJobs moverInfo.currentLocation');
+    const movers = await User.findAvailableMovers();
+    const populatedMovers = await User.populate(movers, {
+      path: 'moverInfo',
+      select: 'rating totalJobs currentLocation'
+    });
 
-    return sendSuccess(res, movers, 'Available movers retrieved');
+    return sendSuccess(res, populatedMovers, 'Available movers retrieved');
   } catch (error) {
     consoleLogger.error('moving', 'Get available movers failed', error);
     return sendError(res, 'Failed to get available movers', 500);

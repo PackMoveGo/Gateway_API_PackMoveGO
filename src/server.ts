@@ -11,7 +11,7 @@ if (require.main === module) {
   console.log('🚀 PackMoveGO API - TypeScript entry point...');
   
   // Try to load the compiled server
-  const compiledPath = nodePath.join(__dirname, '..', 'dist', 'src', 'server.js');
+  const compiledPath = nodePath.join(__dirname, 'server.js');
   
   if (nodeFs.existsSync(compiledPath)) {
     console.log('✅ Found compiled server, redirecting...');

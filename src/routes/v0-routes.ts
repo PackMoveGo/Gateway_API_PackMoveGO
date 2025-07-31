@@ -77,35 +77,61 @@ v0Router.get('/:name', (req: Request, res: Response) => {
     try {
       const filename = v0DataFiles[name as keyof typeof v0DataFiles];
       
-      // Try to load the data file using fs.readFileSync for better error handling
+      
+      // Try to load the data file using fs.readFileSync with multiple path fallbacks
       let data;
       try {
-        const filePath = path.join(__dirname, '../data', filename);
-        
-        // Check if file exists
-        if (!fs.existsSync(filePath)) {
-          console.error(`❌ /v0/ File not found: ${filePath}`);
+        // Try multiple possible paths for the data file
+        const possiblePaths = [
+          path.join(__dirname, '../data', filename),
+          path.join(__dirname, '../../data', filename),
+          path.join(__dirname, 'data', filename),
+          path.join(__dirname, '..', 'src', 'data', filename),
+          path.join(__dirname, 'src', 'data', filename)
+        ];
+
+        let fileFound = false;
+        let filePath = '';
+
+        for (const tryPath of possiblePaths) {
+          if (fs.existsSync(tryPath)) {
+            try {
+              const fileContent = fs.readFileSync(tryPath, 'utf8');
+              data = JSON.parse(fileContent);
+              fileFound = true;
+              filePath = tryPath;
+              console.log(`✅ Data loaded from: ${tryPath}`);
+              break;
+            } catch (error) {
+              console.error(`❌ Error reading ${tryPath}:`, error);
+            }
+          }
+        }
+
+        if (!fileFound) {
+          console.error('❌ Data file not found in any of the expected locations:', possiblePaths);
           return res.status(404).json({ 
             success: false,
             message: 'Data file not found',
             error: `File ${filename} does not exist`,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            debug: {
+              __dirname,
+              possiblePaths
+            }
           });
         }
-        
-        // Read and parse the file
-        const fileContent = fs.readFileSync(filePath, 'utf8');
-        data = JSON.parse(fileContent);
         
       } catch (fileError) {
         console.error(`❌ /v0/ Error reading ${filename}:`, fileError);
         return res.status(500).json({ 
           success: false,
-          message: 'Failed to load navigation data',
-          error: 'Could not load navigation data',
+          message: 'Failed to load data',
+          error: 'Could not load data',
           details: fileError instanceof Error ? fileError.message : 'Unknown file error',
           timestamp: new Date().toISOString()
         });
+      });
       }
       
       return res.json(data);

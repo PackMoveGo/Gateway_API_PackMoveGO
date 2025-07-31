@@ -15,7 +15,8 @@ if (require.main === module) {
     console.error('Please run: npm run build');
     process.exit(1);
   }
-  return;
+  // Exit after redirecting
+  process.exit(0);
 }
 
 import express from 'express';

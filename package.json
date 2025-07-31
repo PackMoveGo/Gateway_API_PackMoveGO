@@ -2,9 +2,9 @@
   "name": "pack-go-movers-backend",
   "version": "1.0.0",
   "description": "Backend for Pack Go Movers",
-  "main": "dist/server.js",
+  "main": "server.js",
   "scripts": {
-    "start": "node dist/server.js",
+    "start": "node server.js",
     "start:gateway": "nodemon src/gateway.ts",
     "start:prod": "node dist/server.js",
     "start:gateway:prod": "node dist/gateway.js",

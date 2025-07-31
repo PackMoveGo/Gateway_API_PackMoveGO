@@ -1,23 +1,11 @@
-<<<<<<< HEAD
 node_modules/
 dist/
+build/
+logs/
 *.env
 .env.local
 .env.*.local
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-.DS_Store 
-=======
-**/config/
-
-**/node_modules/
-
-**/dist/
-
-**/build/
-
-**/logs/
-
-**/*.env.*
->>>>>>> b6c9270 (Initial commit: PackMoveGO API backend, ready for Render deployment with versioned endpoints and config folder support)
+.DS_Store

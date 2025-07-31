@@ -234,7 +234,7 @@ class DatabaseManager {
     if (this.status.type === 'mongodb' && this.status.connected) {
       // Use MongoDB
       const model = mongoose.models[collection] || mongoose.model(collection, new mongoose.Schema({}, { strict: false }));
-      return query ? model.find(query) : model.find();
+      return query ? (model as any).find(query) : (model as any).find();
     } else {
       // Use JSON files
       try {
@@ -254,7 +254,7 @@ class DatabaseManager {
     if (this.status.type === 'mongodb' && this.status.connected) {
       // Use MongoDB
       const model = mongoose.models[collection] || mongoose.model(collection, new mongoose.Schema({}, { strict: false }));
-      await model.create(data);
+      await (model as any).create(data);
     } else {
       // Use JSON files
       try {

@@ -19,7 +19,8 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "types": ["node"],
-    "noImplicitAny": false
+    "noImplicitAny": false,
+    "skipDefaultLibCheck": true
   },
   "include": [
     "src/**/*",

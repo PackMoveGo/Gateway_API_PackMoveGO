@@ -1,18 +1,25 @@
 #!/usr/bin/env node
 
-// Redirect to compiled version if run directly
+// This file can be run directly by Node.js
+// It will redirect to the compiled JavaScript version
+
+const nodePath = require('path');
+const nodeFs = require('fs');
+
+// Check if we're being run directly
 if (require.main === module) {
-  const path = require('path');
-  const fs = require('fs');
+  console.log('🚀 PackMoveGO API - TypeScript entry point...');
   
-  const compiledPath = path.join(__dirname, '..', 'dist', 'src', 'server.js');
+  // Try to load the compiled server
+  const compiledPath = nodePath.join(__dirname, '..', 'dist', 'src', 'server.js');
   
-  if (fs.existsSync(compiledPath)) {
-    console.log('🚀 Redirecting to compiled server...');
+  if (nodeFs.existsSync(compiledPath)) {
+    console.log('✅ Found compiled server, redirecting...');
     require(compiledPath);
   } else {
     console.error('❌ Compiled server not found!');
-    console.error('Please run: npm run build');
+    console.error('Expected:', compiledPath);
+    console.error('Please ensure the build process completed successfully.');
     process.exit(1);
   }
   // Exit after redirecting

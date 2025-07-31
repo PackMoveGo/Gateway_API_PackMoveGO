@@ -4,7 +4,7 @@
   "description": "Backend for Pack Go Movers",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
+    "start": "node server.js",
     "start:render": "node start-render.js",
     "start:gateway": "nodemon src/gateway.ts",
     "start:prod": "node dist/server.js",
@@ -18,7 +18,7 @@
     "build:backend": "tsc",
     "build:gateway": "tsc src/gateway.ts --outDir dist",
     "copy-data": "cp -r src/data dist/data",
-    "postinstall": "npm run build:backend",
+    "postinstall": "echo 'Skipping TypeScript build for deployment'",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",

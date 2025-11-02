@@ -75,6 +75,11 @@ export const config = {
   SSL_CERT_PATH: process.env.SSL_CERT_PATH || '',
   GATEWAY_SSL_KEY_PATH: process.env.GATEWAY_SSL_KEY_PATH || '',
   GATEWAY_SSL_CERT_PATH: process.env.GATEWAY_SSL_CERT_PATH || '',
+  
+  // SSH
+  SSH_ENABLED: process.env.SSH_ENABLED === 'true',
+  SSH_PORT: parseInt(process.env.SSH_PORT || '2222', 10),
+  SSH_PASSWORD: process.env.SSH_PASSWORD || '',
 
   // Rate Limiting
   RATE_LIMIT_WINDOW_MS: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000', 10),

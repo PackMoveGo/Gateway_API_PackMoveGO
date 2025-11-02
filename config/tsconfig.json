@@ -37,6 +37,8 @@
     "strictPropertyInitialization": false,
     "noImplicitThis": false,
     "alwaysStrict": false,
+    "noEmit": false,
+    "noEmitOnError": false,
 
     /* Completeness */
     "skipLibCheck": true,

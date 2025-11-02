@@ -37,7 +37,6 @@ if(!isProduction) {
           "CATEGORY:VERCEL",
           "CATEGORY:MONITOR",
           "CATEGORY:SEARCH_ENGINE",
-          "CATEGORY:BROWSER", // Allow browsers
           "POSTMAN",
           "CURL", // Allow curl for testing
         ],

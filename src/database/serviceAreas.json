@@ -1,0 +1,85 @@
+{
+  "success": true,
+  "data": {
+    "serviceAreas": [
+      {
+        "id": 1,
+        "name": "Los Angeles County",
+        "state": "CA",
+        "zipCodes": ["90001", "90002", "90003", "90004", "90005", "90006", "90007", "90008", "90010", "90011"],
+        "cities": ["Los Angeles", "Beverly Hills", "Santa Monica", "Pasadena", "Long Beach"],
+        "radius": 50,
+        "active": true,
+        "description": "Greater Los Angeles area including downtown LA, Beverly Hills, and surrounding cities"
+      },
+      {
+        "id": 2,
+        "name": "San Francisco Bay Area",
+        "state": "CA",
+        "zipCodes": ["94102", "94103", "94104", "94105", "94107", "94108", "94109", "94110", "94111", "94112"],
+        "cities": ["San Francisco", "Oakland", "Berkeley", "San Jose", "Palo Alto"],
+        "radius": 60,
+        "active": true,
+        "description": "San Francisco Bay Area including SF, Oakland, Berkeley, and Silicon Valley"
+      },
+      {
+        "id": 3,
+        "name": "San Diego County",
+        "state": "CA",
+        "zipCodes": ["92101", "92102", "92103", "92104", "92105", "92106", "92107", "92108", "92109", "92110"],
+        "cities": ["San Diego", "La Jolla", "Del Mar", "Encinitas", "Carlsbad"],
+        "radius": 45,
+        "active": true,
+        "description": "San Diego County including downtown, beaches, and north county coastal areas"
+      },
+      {
+        "id": 4,
+        "name": "Orange County",
+        "state": "CA",
+        "zipCodes": ["92602", "92603", "92604", "92606", "92610", "92612", "92614", "92618", "92620", "92626"],
+        "cities": ["Irvine", "Newport Beach", "Anaheim", "Santa Ana", "Huntington Beach"],
+        "radius": 40,
+        "active": true,
+        "description": "Orange County including Irvine, Newport Beach, and surrounding beach cities"
+      },
+      {
+        "id": 5,
+        "name": "Inland Empire",
+        "state": "CA",
+        "zipCodes": ["92501", "92503", "92504", "92505", "92506", "92507", "92508", "92509", "91701", "91730"],
+        "cities": ["Riverside", "San Bernardino", "Ontario", "Rancho Cucamonga", "Corona"],
+        "radius": 55,
+        "active": true,
+        "description": "Inland Empire including Riverside and San Bernardino counties"
+      },
+      {
+        "id": 6,
+        "name": "Sacramento Metro",
+        "state": "CA",
+        "zipCodes": ["95814", "95815", "95816", "95817", "95818", "95819", "95820", "95821", "95822", "95823"],
+        "cities": ["Sacramento", "Elk Grove", "Roseville", "Folsom", "Davis"],
+        "radius": 35,
+        "active": true,
+        "description": "Greater Sacramento area including downtown and surrounding suburbs"
+      },
+      {
+        "id": 7,
+        "name": "Central Valley",
+        "state": "CA",
+        "zipCodes": ["93701", "93702", "93703", "93704", "93705", "93706", "93710", "93720", "93721", "93722"],
+        "cities": ["Fresno", "Bakersfield", "Modesto", "Stockton", "Visalia"],
+        "radius": 50,
+        "active": true,
+        "description": "Central California Valley including Fresno and surrounding agricultural areas"
+      }
+    ],
+    "metadata": {
+      "totalAreas": 7,
+      "lastUpdated": "2025-11-07T00:00:00.000Z",
+      "coverage": "California statewide service",
+      "estimatedPopulation": 25000000
+    }
+  },
+  "timestamp": "2025-11-07T00:00:00.000Z"
+}
+

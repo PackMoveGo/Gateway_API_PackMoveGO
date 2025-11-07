@@ -95,7 +95,7 @@ router.get('/:name', (req, res) => {
   // Only allow specific files for security
   // Note: 'health' is handled by a specific route handler above
   const allowedFiles = [
-    'nav', 'contact', 'referral', 'blog', 'reviews', 'locations', 'supplies', 'services', 'Testimonials', 'about', 'recentMoves'
+    'nav', 'contact', 'referral', 'blog', 'reviews', 'locations', 'supplies', 'services', 'serviceAreas', 'Testimonials', 'about', 'recentMoves'
   ];
   
   if (!allowedFiles.includes(name)) {

@@ -4,8 +4,9 @@
   "description": "Backend for Pack Go Movers",
   "main": "index.js",
   "scripts": {
-    "build": "tsc",
-    "build:clean": "rm -rf dist && tsc",
+    "build": "tsc && npm run copy:database",
+    "copy:database": "mkdir -p dist/src && cp -r src/database dist/src/",
+    "build:clean": "rm -rf dist && tsc && npm run copy:database",
     "build:server": "tsc --project config/tsconfig.server.json --noEmitOnError false || true",
     "build:gateway": "tsc --project config/tsconfig.gateway.json --noEmitOnError false || true",
     "postinstall": "npm run build",

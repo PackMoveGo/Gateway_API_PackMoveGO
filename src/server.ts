@@ -123,12 +123,32 @@ app.use((req: express.Request, res: express.Response, next: express.NextFunction
   
   console.log(`🔍 Server - Gateway header check: hasGatewayHeader=${hasGatewayHeader}, NODE_ENV=${config.NODE_ENV}`);
   
+  // Check if request is from Render's internal network (10.x.x.x)
+  const clientIp=req.ip || req.socket.remoteAddress || '';
+  const isRenderInternal=clientIp.startsWith('10.') || clientIp.startsWith('::ffff:10.');
+  
   // In development mode, allow requests with gateway header
   if(config.NODE_ENV==='development') {
     if(hasGatewayHeader) {
       console.log('✅ Server - Request from gateway (development mode)');
       return next();
     }
+  }
+  
+  // In production, allow requests from Render internal network OR with gateway header
+  if(config.NODE_ENV==='production') {
+    if(hasGatewayHeader || isRenderInternal) {
+      if(isRenderInternal) {
+        console.log(`✅ Server - Request from Render internal network (${clientIp})`);
+      } else {
+        console.log('✅ Server - Request has gateway header');
+      }
+      return next();
+    }
+    
+    // No gateway header and not from Render internal network - redirect
+    console.log(`🚫 Server - No gateway header in production from ${clientIp}, redirecting`);
+    return res.redirect(301, 'https://packmovego.com');
   }
   
   const host=req.headers.host || '';
@@ -139,12 +159,6 @@ app.use((req: express.Request, res: express.Response, next: express.NextFunction
   // If accessing server directly (not through gateway), redirect to packmovego.com
   if(isDirectServerAccess && !hasGatewayHeader) {
     console.log('🚫 Server - Direct access blocked, redirecting');
-    return res.redirect(301, 'https://packmovego.com');
-  }
-  
-  // In production, enforce gateway header
-  if(config.NODE_ENV==='production' && !hasGatewayHeader) {
-    console.log('🚫 Server - No gateway header in production, redirecting');
     return res.redirect(301, 'https://packmovego.com');
   }
   

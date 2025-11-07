@@ -1,0 +1,13 @@
+# Render Start Commands
+# Copy these to Render Dashboard Settings > Build & Deploy > Start Command
+
+# For Private Service (API_PackMoveGO):
+npm run start:render:server
+
+# For Gateway Service (Gateway_API_PackMoveGO):
+npm run start:render:gateway
+
+# Or use direct node commands:
+# Private: node dist/src/server-entry.js
+# Gateway: node dist/src/gateway/gateway-entry.js
+

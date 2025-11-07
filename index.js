@@ -29,24 +29,42 @@ if (SERVICE_TYPE === 'gateway') {
   entryFile = path.join(__dirname, 'dist', 'src', 'server-entry.js');
   console.log('🔒 Starting Private API Service...');
 } else {
-  // Development mode - run both services
-  console.log('🔧 Development Mode - Starting both services...');
-  
-  const concurrently = require('concurrently');
-  
-  concurrently([
-    { command: 'npm run start:server', name: 'API', prefixColor: 'green' },
-    { command: 'npm run start:gateway', name: 'Gateway', prefixColor: 'blue' }
-  ], {
-    prefix: 'name',
-    killOthers: ['failure', 'success'],
-    restartTries: 3,
-  }).then(
-    () => console.log('✅ All services completed'),
-    () => console.error('❌ One or more services failed')
-  );
-  
-  return;
+  // Production without SERVICE_TYPE or Development mode
+  if (NODE_ENV === 'production') {
+    console.error('❌ ERROR: SERVICE_TYPE environment variable is not set!');
+    console.error('');
+    console.error('For Render deployment, you must set SERVICE_TYPE to either:');
+    console.error('  - "private" for the Private API Service');
+    console.error('  - "gateway" for the Gateway Service');
+    console.error('');
+    console.error('Add this in Render Dashboard:');
+    console.error('  Settings → Environment → Add Environment Variable');
+    console.error('  Key: SERVICE_TYPE');
+    console.error('  Value: private (or gateway)');
+    console.error('');
+    console.error('Defaulting to private service as fallback...');
+    entryFile = path.join(__dirname, 'dist', 'src', 'server-entry.js');
+  } else {
+    // Development mode - run both services
+    console.log('🔧 Development Mode - Starting both services...');
+    
+    const concurrently = require('concurrently');
+    const { result } = concurrently([
+      { command: 'npm run start:server', name: 'API', prefixColor: 'green' },
+      { command: 'npm run start:gateway', name: 'Gateway', prefixColor: 'blue' }
+    ], {
+      prefix: 'name',
+      killOthers: ['failure', 'success'],
+      restartTries: 3,
+    });
+    
+    result.then(
+      () => console.log('✅ All services completed'),
+      () => console.error('❌ One or more services failed')
+    );
+    
+    return;
+  }
 }
 
 // Check if entry file exists

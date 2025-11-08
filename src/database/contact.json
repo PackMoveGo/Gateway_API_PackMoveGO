@@ -10,17 +10,17 @@
   "officeLocations": [
     {
       "id": 1,
-      "name": "Anaheim Office",
+      "name": "Main Office",
       "type": "Main Office",
       "address": {
-        "street": "1234 Moving Way",
-        "city": "Anaheim",
+        "street": "1369 Adam's Ave",
+        "city": "Orange County",
         "state": "CA",
-        "zip": "92801",
-        "fullAddress": "1234 Moving Way, Anaheim, CA 92801"
+        "zip": "92602",
+        "fullAddress": "1369 Adam's Ave, Orange County, CA 92602"
       },
       "phone": "+1 (714) 555-0123",
-      "email": "anaheim@packmovego.com",
+      "email": "info@packmovego.com",
       "hours": {
         "monday": "8:00 AM - 6:00 PM",
         "tuesday": "8:00 AM - 6:00 PM",
@@ -31,62 +31,6 @@
         "sunday": "Closed"
       },
       "services": ["Residential Moving", "Commercial Moving", "Packing Services", "Storage Solutions"],
-      "coordinates": {
-        "lat": 33.8366,
-        "lng": -117.9143
-      }
-    },
-    {
-      "id": 2,
-      "name": "Irvine Office",
-      "type": "Service Center",
-      "address": {
-        "street": "5678 Business Blvd",
-        "city": "Irvine",
-        "state": "CA",
-        "zip": "92618",
-        "fullAddress": "5678 Business Blvd, Irvine, CA 92618"
-      },
-      "phone": "+1 (949) 555-0125",
-      "email": "irvine@packmovego.com",
-      "hours": {
-        "monday": "8:00 AM - 6:00 PM",
-        "tuesday": "8:00 AM - 6:00 PM",
-        "wednesday": "8:00 AM - 6:00 PM",
-        "thursday": "8:00 AM - 6:00 PM",
-        "friday": "8:00 AM - 6:00 PM",
-        "saturday": "9:00 AM - 4:00 PM",
-        "sunday": "Closed"
-      },
-      "services": ["Residential Moving", "Commercial Moving", "Packing Services"],
-      "coordinates": {
-        "lat": 33.6846,
-        "lng": -117.8265
-      }
-    },
-    {
-      "id": 3,
-      "name": "Santa Ana Office",
-      "type": "Service Center",
-      "address": {
-        "street": "9012 Orange Ave",
-        "city": "Santa Ana",
-        "state": "CA",
-        "zip": "92701",
-        "fullAddress": "9012 Orange Ave, Santa Ana, CA 92701"
-      },
-      "phone": "+1 (714) 555-0126",
-      "email": "santaan@packmovego.com",
-      "hours": {
-        "monday": "8:00 AM - 6:00 PM",
-        "tuesday": "8:00 AM - 6:00 PM",
-        "wednesday": "8:00 AM - 6:00 PM",
-        "thursday": "8:00 AM - 6:00 PM",
-        "friday": "8:00 AM - 6:00 PM",
-        "saturday": "9:00 AM - 4:00 PM",
-        "sunday": "Closed"
-      },
-      "services": ["Residential Moving", "Packing Services", "Storage Solutions"],
       "coordinates": {
         "lat": 33.7455,
         "lng": -117.8677

@@ -39,6 +39,46 @@ router.options('/health', (req, res) => {
   res.status(200).end();
 });
 
+// Specific handler for /nav/footer endpoint
+router.get('/nav/footer', (req, res) => {
+  const origin=req.headers.origin;
+  if (origin) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization,x-api-key,X-Requested-With');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS,HEAD');
+  
+  const dataDir=path.join(__dirname, '../database');
+  const filePath=path.join(dataDir, 'nav.json');
+  
+  fs.readFile(filePath, 'utf8', (err, data) => {
+    if (err) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Data file not found',
+        error: 'Navigation data could not be loaded',
+        timestamp: new Date().toISOString()
+      });
+    }
+    
+    try {
+      const parsedData=JSON.parse(data);
+      // Return only footer navigation
+      return res.status(200).json({
+        footerNav: parsedData.footerNav || parsedData.mainNav || []
+      });
+    } catch (e) {
+      return res.status(500).json({ 
+        success: false,
+        message: 'Server error',
+        error: 'Invalid JSON format in navigation data',
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
+});
+
 // Specific handler for /recentMoves/total endpoint
 router.get('/recentMoves/total', (req, res) => {
   // Set CORS headers

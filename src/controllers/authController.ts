@@ -44,25 +44,71 @@ export const signUp=async (req:Request,res:Response,next:NextFunction)=>{
 export const signIn=async (req:Request,res:Response,next:NextFunction)=>{
     try{
         const {email,password}=req.body;
-        const user=await (User.findOne as any)({email});
-        if(!user){
-            const error=new Error('User not found') as any;
-            error.statusCode=404;
+        
+        // Validate input
+        if(!email || !password){
+            const error=new Error('Email and password are required') as any;
+            error.statusCode=400;
             throw error;
         }
-        const isPasswordCorrect=await bcrypt.compare(password,user.password);
-        if(!isPasswordCorrect){
-            const error=new Error('Invalid password') as any;
+        
+        // Find user by email (case-insensitive)
+        const user=await (User.findOne as any)({email: email.toLowerCase().trim()});
+        if(!user){
+            const error=new Error('Invalid email or password') as any;
             error.statusCode=401;
             throw error;
         }
-        const token=jwt.sign({userId:user._id},JWT_SECRET,{expiresIn:JWT_EXPIRE_IN} as any);
+        
+        // Check if user has a password (OAuth users might not have passwords)
+        if(!user.password){
+            const error=new Error('Invalid email or password') as any;
+            error.statusCode=401;
+            throw error;
+        }
+        
+        // Compare password using bcrypt
+        const isPasswordCorrect=await bcrypt.compare(password,user.password);
+        if(!isPasswordCorrect){
+            const error=new Error('Invalid email or password') as any;
+            error.statusCode=401;
+            throw error;
+        }
+        
+        // Check if account is active
+        if(!user.isActive){
+            const error=new Error('Account is inactive. Please contact support.') as any;
+            error.statusCode=403;
+            throw error;
+        }
+        
+        // Update last login
+        user.lastLogin=new Date();
+        user.loginCount=(user.loginCount || 0)+1;
+        await user.save();
+        
+        // Generate JWT token
+        const token=jwt.sign(
+            {
+                userId:user._id,
+                email:user.email,
+                role:user.role
+            },
+            JWT_SECRET,
+            {expiresIn:JWT_EXPIRE_IN} as any
+        );
+        
+        // Return user data without password
+        const userData=user.toJSON();
+        delete userData.password;
+        delete userData.refreshToken;
+        
         res.status(200).json({
             success:true,
             message:'User signed in successfully',
             data:{
                 token,
-                user,
+                user:userData,
             }
         });
     }catch(error){

@@ -1,10 +1,8 @@
 import express from 'express';
 import { performanceMonitor } from '../util/performance-monitor';
 import { advancedSecurity } from '../util/advanced-security';
-// import { loadBalancer } from '../util/load-balancer'; // Temporarily disabled
 import { advancedCache } from '../util/caching-system';
 import { compressionManager } from '../util/compression-middleware';
-import { backupSystem } from '../util/backup-system';
 
 const router = express.Router();
 
@@ -153,10 +151,14 @@ router.post('/admin/security/unblock-ip', (req, res) => {
   }
 });
 
-// === LOAD BALANCER MANAGEMENT === (Temporarily disabled)
-// Load balancer management will be added in next update
+// === LOAD BALANCER MANAGEMENT === (Disabled)
+// Load balancer management removed - not needed for single-server deployment
 
-// === BACKUP MANAGEMENT ===
+// === BACKUP MANAGEMENT === (Disabled)
+// Backup routes commented out - backup-system utility removed
+// TODO: Re-implement with simpler backup strategy if needed
+
+/*
 router.post('/admin/backup/create', async (req, res) => {
   try {
     const filename = await backupSystem.createBackup();
@@ -218,6 +220,7 @@ router.get('/admin/backup/download/:filename', async (req, res) => {
     });
   }
 });
+*/
 
 // === SYSTEM CONTROLS ===
 router.post('/admin/system/restart', (req, res) => {

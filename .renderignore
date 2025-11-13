@@ -1,0 +1,55 @@
+# Files and directories to ignore during Render deployment
+
+# Environment files (use Render dashboard for env vars)
+.env
+.env.*
+!.env.example
+
+# Development environment configs
+config/.env.development.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+test/
+coverage/
+*.test.ts
+*.spec.ts
+
+# Logs
+logs/
+*.log
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# Development scripts
+script/test-*.sh
+script/generate-certs.js
+
+# Data directories (if using file-based storage)
+data/user-sessions.json
+data/services.json
+
+# Backup files
+*.backup
+*.bak
+*.old
+
+# Source maps (optional)
+# *.map
+
+# SSL certificates for local dev
+config/certs/dev/
+

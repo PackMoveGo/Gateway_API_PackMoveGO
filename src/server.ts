@@ -37,6 +37,7 @@ import fs from 'fs';
 // Database and core utilities
 // Database connection will be handled by the database manager
 import mongoose from 'mongoose';
+import connectToDatabase from './database/mongodb-connection';
 import SocketUtils from './util/socket-utils';
 import JWTUtils from './util/jwt-utils';
 
@@ -55,21 +56,22 @@ import securityRoutes from './routes/securityRoutes';
 import dataRoutes from './routes/dataRoutes';
 import servicesRoutes from './routes/servicesRoutes';
 import analyticsRoutes from './routes/analyticsRoutes';
-import privateNetworkRoutes from './routes/privateNetworkRoutes';
-import loadBalancerRoutes from './routes/loadBalancerRoutes';
 import v0Routes from './routes/v0-routes';
 import bookingRoutes from './routes/bookingRoutes';
 import chatRoutes from './routes/chatRoutes';
 import paymentRoutes from './routes/paymentRoutes';
+import contactRoutes from './routes/contactRoutes';
+import referralRoutes from './routes/referralRoutes';
+import quoteRoutes from './routes/quoteRoutes';
 // SSD_Alt merged routes
 import authRouterAlt from './routes/authRoutes-alt';
 import subscriptionRouter from './routes/subscriptionRoutes';
 import workflowRouter from './routes/workflowRoutes';
+import searchRoutes from './routes/searchRoutes';
 import arcjetMiddleware from './middlewares/arcjet-middleware';
 
 // Utilities
 import serverMonitor from './util/monitor';
-import loadBalancer from './util/load-balancer';
 import { log, consoleLogger } from './util/console-logger';
 import { userTracker } from './util/user-tracker';
 import { sessionLogger } from './util/session-logger';
@@ -213,7 +215,7 @@ const io = new Server(server, {
 });
 
 const port = envConfig.PORT || '3000';
-const localNetwork = process.env.LOCAL_NETWORK || 'localhost';
+const localNetwork = config.LOCAL_NETWORK;
 
 // === SOCKET.IO CONFIGURATION ===
 consoleLogger.socketInit();
@@ -238,7 +240,7 @@ setInterval(() => {
 app.get('/api/health', (req, res) => {
   res.status(200).json({
     status: 'ok',
-    environment: process.env.NODE_ENV || 'development',
+    environment: config.NODE_ENV,
     timestamp: new Date().toISOString(),
     uptime: Math.floor(process.uptime()),
     version: '1.0.0'
@@ -417,17 +419,19 @@ process.on('unhandledRejection', (reason: any, promise: Promise<any>) => {
 
 // === DATABASE CONNECTION ===
 console.log('🚀 Starting database connection...');
-// Database connection simplified for deployment
-Promise.resolve().then(() => {
+// Connect to MongoDB Atlas
+connectToDatabase().then(() => {
   console.log('✅ Database connection completed');
   console.log('📊 Connection status: true');
 }).catch((err: any) => {
   consoleLogger.databaseError(err);
+  console.error('❌ Failed to connect to MongoDB:', err);
+  process.exit(1);
 });
 
 // === CORS JWT CONFIGURATION ===
 const corsJWT = createCORSJWT({
-  jwtSecret: process.env.JWT_SECRET || 'your-jwt-secret',
+  jwtSecret: config.JWT_SECRET,
   allowedOrigins: allowedCorsOrigins,
   publicEndpoints: [
     '/health',
@@ -486,8 +490,6 @@ app.use(burstProtection);
 // CORS middleware - MUST be before other middleware
 app.use(corsJWT.middleware);
 
-app.use(loadBalancer.middleware);
-
 // Request logging middleware with user tracking
 app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
   const startTime = Date.now();
@@ -530,7 +532,7 @@ app.use((req: express.Request, res: express.Response, next: express.NextFunction
 });
 
 // Basic middleware
-app.use(cookieParser(process.env.API_KEY_FRONTEND, {
+app.use(cookieParser(config.API_KEY_FRONTEND, {
   decode: decodeURIComponent
 }));
 
@@ -539,7 +541,7 @@ app.use((req: express.Request, res: express.Response, next: express.NextFunction
   if (!clientCookie || clientCookie !== 'frontend_server') {
     res.cookie('server_client', 'frontend_server', {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: config.isProduction,
       sameSite: 'strict'
     });
   }
@@ -582,6 +584,7 @@ app.use('/security', securityRoutes);
 app.use('/v0/auth', arcjetMiddleware, authRouterAlt);
 app.use('/v0/subscriptions', arcjetMiddleware, subscriptionRouter);
 app.use('/v0/workflows', arcjetMiddleware, workflowRouter);
+app.use('/v0/search', searchRoutes);
 
 // Handle /api/v0/* requests and redirect to /v0/*
 app.use('/api/v0', (req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -651,14 +654,24 @@ app.get('/api/v0/health', (req: express.Request, res: express.Response) => {
 // V0 content routes
 app.use('/v0', v0Routes);
 
+// Contact, referral, and quote routes (MongoDB-based)
+app.use('/v0/contact', contactRoutes);
+app.use('/v0/referral', referralRoutes);
+app.use('/v0/quotes', quoteRoutes);
+
+// Public API routes - alias for /v0/* endpoints
+// This allows /public/services to work by proxying to /v0/services
+app.use('/public', (req, res, next) => {
+  // Rewrite /public/* to /v0/*
+  req.url = req.url.replace(/^\/public/, '/v0');
+  // Forward to v0Routes handler
+  v0Routes(req, res, next);
+});
+
 // Uber-like application routes
 app.use('/v1/bookings', bookingRoutes);
 app.use('/v1/chat', chatRoutes);
 app.use('/v1/payments', paymentRoutes);
-
-// Infrastructure routes
-app.use('/internal', privateNetworkRoutes);
-app.use('/load-balancer', loadBalancerRoutes);
 
 // Data and services routes (mounted after specific routes to avoid conflicts)
 app.use('/data', dataRoutes);
@@ -938,7 +951,7 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
 });
 
 // === START SERVER ===
-const serviceType = process.env.SERVICE_TYPE || 'web';
+const serviceType = config.SERVICE_TYPE || 'web';
 const isPrivateService = serviceType === 'private';
 
 const USE_SSL = config.USE_SSL;

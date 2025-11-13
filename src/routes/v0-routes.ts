@@ -92,13 +92,27 @@ router.get('/:name', (req, res) => {
     });
   }
   
-  // Only allow specific files for security
-  // Note: 'health' is handled by a specific route handler above
-  const allowedFiles = [
-    'nav', 'contact', 'referral', 'blog', 'reviews', 'locations', 'supplies', 'services', 'serviceAreas', 'Testimonials', 'about', 'recentMoves'
-  ];
+  // Map of allowed files with their actual filenames (for case sensitivity)
+  const fileMap: Record<string, string> = {
+    'nav': 'nav.json',
+    'contact': 'contact.json',
+    'referral': 'referral.json',
+    'blog': 'blog.json',
+    'reviews': 'reviews.json',
+    'locations': 'locations.json',
+    'supplies': 'supplies.json',
+    'services': 'services.json',
+    'serviceareas': 'serviceAreas.json',
+    'testimonials': 'Testimonials.json',  // Capital T in filename
+    'about': 'about.json',
+    'recentmoves': 'recentMoves.json'
+  };
   
-  if (!allowedFiles.includes(name)) {
+  // Normalize name to lowercase for case-insensitive lookup
+  const normalizedName = name.toLowerCase();
+  const actualFilename = fileMap[normalizedName];
+  
+  if (!actualFilename) {
     return res.status(404).json({ 
       success: false,
       message: 'Data file not found',
@@ -116,10 +130,9 @@ router.get('/:name', (req, res) => {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization,x-api-key,X-Requested-With');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS,HEAD');
   
-  // about.txt is a text file, others are JSON
-  const ext = name === 'about' ? '.txt' : '.json';
+  // Construct file path using actual filename
   const dataDir = path.join(__dirname, '../database');
-  const filePath = path.join(dataDir, name + ext);
+  const filePath = path.join(dataDir, actualFilename);
   
   fs.readFile(filePath, 'utf8', (err, data) => {
     if (err) {
@@ -131,7 +144,7 @@ router.get('/:name', (req, res) => {
       });
     }
     
-    if (ext === '.json') {
+    // All files in fileMap are JSON
       try {
         const parsedData = JSON.parse(data);
         return res.status(200).json(parsedData);
@@ -142,9 +155,6 @@ router.get('/:name', (req, res) => {
           error: 'Invalid JSON format in data file',
           timestamp: new Date().toISOString()
         });
-      }
-    } else {
-      return res.status(200).type('text/plain').send(data);
     }
   });
 });

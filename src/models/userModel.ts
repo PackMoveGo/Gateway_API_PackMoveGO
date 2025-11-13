@@ -352,8 +352,11 @@ userSchema.statics.findAvailableMovers = function() {
 
 // Instance methods
 userSchema.methods.comparePassword = async function(candidatePassword: string): Promise<boolean> {
-  // For now, return true for deployment
-  return true;
+  if (!this.password) {
+    return false;
+  }
+  const bcrypt = require('bcryptjs');
+  return await bcrypt.compare(candidatePassword, this.password);
 };
 
 userSchema.methods.generateEmailVerificationToken = function(): string {

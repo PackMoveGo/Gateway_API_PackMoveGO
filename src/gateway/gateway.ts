@@ -17,8 +17,9 @@ const config = envLoader.getConfig();
 // Arcjet protection
 import aj from '../../config/arcjet';
 const app = express();
-// On Render, use PORT env var (10000), otherwise use GATEWAY_PORT for local dev
-const PORT = config.PORT || config.GATEWAY_PORT;
+// In production, use GATEWAY_PORT (10000), otherwise fallback to PORT
+// Backend uses PORT (15050) in production
+const PORT = config.GATEWAY_PORT || config.PORT;
 const PRIVATE_API_URL = config.PRIVATE_API_URL;
 
 // Security middleware
@@ -170,25 +171,41 @@ app.use(async (req, res, next) => {
 const FRONTEND_API_KEY=config.API_KEY_FRONTEND || 'pmg_frontend_live_sk_a7f8e2d9c1b4x6m9p3q8r5t2w7y1z4a6';
 
 app.use((req, res, next) => {
+  // Enhanced debug logging for API key validation
+  if(config.NODE_ENV==='development') {
   console.log('\n' + '='.repeat(80));
   console.log('>>> Gateway API Key Check - Path:', req.path);
+    console.log('>>> Method:', req.method);
+    console.log('>>> Origin:', req.get('Origin') || 'None');
+    console.log('>>> Headers:', JSON.stringify({
+      'x-api-key': req.headers['x-api-key'] ? 'present' : 'missing',
+      'authorization': req.headers['authorization'] ? 'present' : 'missing',
+      'content-type': req.headers['content-type'] || 'none'
+    }, null, 2));
   console.log('='.repeat(80) + '\n');
+  }
   
   // Skip auth ONLY for Gateway's own health endpoint (/v0/health)
   // The /health endpoint will be proxied to Private API and requires API key
   if(req.path==='/v0/health') {
+    if(config.NODE_ENV==='development') {
     console.log(`>>> Skipping auth for Gateway health check: ${req.path}`);
+    }
     return next();
   }
   
   // Check for API key in headers
   const apiKey=req.headers['x-api-key'] || req.headers['authorization']?.replace('Bearer ', '');
   
-  console.log('>>> API Key present?', !!apiKey); // Debug
+  if(config.NODE_ENV==='development') {
+    console.log('>>> API Key present?', !!apiKey);
+    if(apiKey) {
+      console.log('>>> API Key length:', apiKey.length);
+      console.log('>>> API Key matches?', apiKey===FRONTEND_API_KEY);
+    }
+  }
   
   if(!apiKey) {
-    console.log('>>> NO API KEY - BLOCKING REQUEST');
-    
     const errorMsg={
       success: false,
       error: 'Unauthorized',
@@ -208,8 +225,9 @@ app.use((req, res, next) => {
     console.error('IP Address:', req.ip);
     console.error('User Agent:', req.get('User-Agent') || 'Unknown');
     console.error('Origin:', req.get('Origin') || 'None');
+    console.error('All Headers:', JSON.stringify(req.headers, null, 2));
     console.error('Timestamp:', errorMsg.timestamp);
-    console.error('Action: Redirecting to https://packmovego.com');
+    console.error('Action: Returning 401 Unauthorized');
     console.error('━'.repeat(80) + '\n');
     
     log.warn('gateway', `Unauthorized access attempt from ${req.ip}`, {
@@ -219,7 +237,12 @@ app.use((req, res, next) => {
       userAgent: req.get('User-Agent')
     });
     
-    // Redirect to main website
+    // Return 401 instead of redirecting in development
+    if(config.NODE_ENV==='development') {
+      return res.status(401).json(errorMsg);
+    }
+    
+    // Redirect to main website in production
     return res.redirect(301, 'https://packmovego.com');
   }
   
@@ -231,7 +254,9 @@ app.use((req, res, next) => {
       ip: req.ip,
       path: req.path,
       origin: req.get('Origin'),
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      receivedKeyLength: apiKey.length,
+      expectedKeyLength: FRONTEND_API_KEY.length
     };
     
     console.error('🚫 Gateway - Invalid API Key:', JSON.stringify(errorMsg, null, 2));
@@ -240,11 +265,18 @@ app.use((req, res, next) => {
       origin: req.get('Origin')
     });
     
-    // Redirect to main website
+    // Return 401 instead of redirecting in development
+    if(config.NODE_ENV==='development') {
+      return res.status(401).json(errorMsg);
+    }
+    
+    // Redirect to main website in production
     return res.redirect(301, 'https://packmovego.com');
   }
   
+  if(config.NODE_ENV==='development') {
   console.log('✅ Gateway - API key validated, passing to next middleware');
+  }
   next();
 });
 
@@ -415,11 +447,28 @@ const proxy=createProxyMiddleware({
       res.setHeader('X-Proxied-By', 'gateway');
     },
     error(err, req, res) {
+      //Type cast err to NodeJS.ErrnoException to access code property
+      const errnoError = err as NodeJS.ErrnoException;
+      //Type cast req to express.Request to access path property
+      const expressReq = req as express.Request;
+      
       console.error('❌ Gateway - Proxy error:', err.message);
+      console.error('❌ Gateway - Error details:', {
+        code: errnoError.code,
+        message: err.message,
+        path: expressReq.path || req.url,
+        target: PRIVATE_API_URL,
+        stack: err.stack
+      });
+      
       if(res && 'headersSent' in res && !res.headersSent){
-        (res as any).status(502).json({
+        const statusCode = errnoError.code === 'ECONNREFUSED' || errnoError.code === 'ETIMEDOUT' ? 503 : 502;
+        (res as any).status(statusCode).json({
           error: 'Gateway Error',
           message: 'Unable to connect to private API service',
+          code: errnoError.code || 'UNKNOWN',
+          path: expressReq.path || req.url,
+          target: PRIVATE_API_URL,
           timestamp: new Date().toISOString()
         });
       }
@@ -430,7 +479,15 @@ const proxy=createProxyMiddleware({
 // Apply the proxy to all matched routes
 console.log('🔧 Gateway - Installing proxy middleware');
 app.use((req, res, next) => {
+  if(config.NODE_ENV==='development') {
   console.log(`🔍 Gateway - Before proxy: ${req.method} ${req.path}`);
+    console.log(`🔍 Gateway - Request origin: ${req.get('Origin') || 'None'}`);
+    console.log(`🔍 Gateway - Request headers:`, {
+      'x-api-key': req.headers['x-api-key'] ? 'present' : 'missing',
+      'content-type': req.headers['content-type'] || 'none',
+      'origin': req.get('Origin') || 'none'
+    });
+  }
   
   // WORKAROUND: Manually add gateway headers before proxying
   // The onProxyReq callback isn't firing, so we add them to the request object
@@ -438,10 +495,13 @@ app.use((req, res, next) => {
   req.headers['x-gateway-service']='pack-go-movers-gateway';
   req.headers['x-original-host']=req.headers.host || 'unknown';
   
+  if(config.NODE_ENV==='development') {
   console.log('✅ Gateway - Manually added headers to request:', {
     'x-gateway-request': req.headers['x-gateway-request'],
     'x-gateway-service': req.headers['x-gateway-service']
   });
+    console.log(`🔍 Gateway - Proxying to: ${PRIVATE_API_URL}${req.path}`);
+  }
   
   next();
 });

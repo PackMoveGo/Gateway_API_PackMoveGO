@@ -42,6 +42,7 @@ export const config = {
   GATEWAY_PORT: parseInt(process.env.GATEWAY_PORT || '3000', 10),
   PRIVATE_API_URL: process.env.PRIVATE_API_URL || 'https://localhost:3001',
   LOCAL_NETWORK: process.env.LOCAL_NETWORK || 'localhost',
+  SERVICE_TYPE: process.env.SERVICE_TYPE || 'web',
 
   // Security
   API_KEY_FRONTEND: process.env.API_KEY_FRONTEND || '',

@@ -39,7 +39,8 @@ export const config = {
 
   // Server
   PORT: parseInt(process.env.PORT || '3001', 10),
-  GATEWAY_PORT: parseInt(process.env.GATEWAY_PORT || '3000', 10),
+  // For Render: If GATEWAY_PORT not set, use PORT environment variable (which Render assigns)
+  GATEWAY_PORT: parseInt(process.env.GATEWAY_PORT || process.env.PORT || '3000', 10),
   PRIVATE_API_URL: process.env.PRIVATE_API_URL || 'https://localhost:3001',
   LOCAL_NETWORK: process.env.LOCAL_NETWORK || 'localhost',
   SERVICE_TYPE: process.env.SERVICE_TYPE || 'web',
